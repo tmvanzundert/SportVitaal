@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportVitaal", "SportVitaal\SportVitaal.csproj", "{DE9277D3-B71A-4665-B779-B225C520AC93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportVitaal.Shared", "SportVitaal.Shared\SportVitaal.Shared.csproj", "{EA6AE2B9-3C3F-477E-A7A0-F52556642FFD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportVitaal.Web", "SportVitaal.Web\SportVitaal.Web.csproj", "{41F9BE40-329B-41D7-8757-BF6587A0AECE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE9277D3-B71A-4665-B779-B225C520AC93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE9277D3-B71A-4665-B779-B225C520AC93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE9277D3-B71A-4665-B779-B225C520AC93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE9277D3-B71A-4665-B779-B225C520AC93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA6AE2B9-3C3F-477E-A7A0-F52556642FFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA6AE2B9-3C3F-477E-A7A0-F52556642FFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA6AE2B9-3C3F-477E-A7A0-F52556642FFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA6AE2B9-3C3F-477E-A7A0-F52556642FFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41F9BE40-329B-41D7-8757-BF6587A0AECE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41F9BE40-329B-41D7-8757-BF6587A0AECE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41F9BE40-329B-41D7-8757-BF6587A0AECE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41F9BE40-329B-41D7-8757-BF6587A0AECE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
