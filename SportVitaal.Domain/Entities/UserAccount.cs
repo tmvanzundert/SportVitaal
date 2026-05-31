@@ -10,7 +10,7 @@ namespace SportVitaal.Domain.Entities
         // but EF needs a parameterless constructor.
         protected UserAccount() { }
 
-        public string Email { get; private set; }
+        public string Email { get; private set; } = null!;
         public string? UserName { get; private set; }
         public string? FullName { get; private set; }
         public string? PhotoUrl { get; private set; }
@@ -50,7 +50,3 @@ namespace SportVitaal.Domain.Entities
         }
     }
 }
-
-
-
-

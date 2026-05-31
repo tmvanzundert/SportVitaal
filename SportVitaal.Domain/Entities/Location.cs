@@ -8,7 +8,7 @@ namespace SportVitaal.Domain.Entities
         // We want to keep the properties private set to enforce invariants,
         // but EF needs a parameterless constructor.
         protected Location() { }
-        public string Name { get; private set; }
+        public string Name { get; private set; } = null!;
         public int Capacity { get; private set; }
         public bool AllowsSeatSelection { get; private set; }
 
