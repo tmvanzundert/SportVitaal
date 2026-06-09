@@ -7,8 +7,11 @@
 
   <ItemGroup>
     <!-- EF Core provider for MariaDB / MySql (Pomelo) and design-time components -->
+    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
