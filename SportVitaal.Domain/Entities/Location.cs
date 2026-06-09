@@ -21,5 +21,14 @@ namespace SportVitaal.Domain.Entities
             Capacity = capacity;
             AllowsSeatSelection = allowsSeatSelection;
         }
+
+        public void Update(string name, int capacity, bool allowsSeatSelection)
+        {
+            if (string.IsNullOrWhiteSpace(name)) throw new DomainException("Location name is required.");
+            if (capacity <= 0) throw new DomainException("Capacity must be positive.");
+            Name = name.Trim();
+            Capacity = capacity;
+            AllowsSeatSelection = allowsSeatSelection;
+        }
     }
 }

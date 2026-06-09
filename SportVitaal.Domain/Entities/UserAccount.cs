@@ -14,6 +14,8 @@ namespace SportVitaal.Domain.Entities
         public string? UserName { get; private set; }
         public string? FullName { get; private set; }
         public string? PhotoUrl { get; private set; }
+        // Password hash (store hashed password); null when using external auth or not set yet
+        public string? PasswordHash { get; private set; }
         public Role Role { get; private set; }
         public bool IsActive { get; private set; }
         public Membership? Membership { get; private set; }
@@ -35,6 +37,16 @@ namespace SportVitaal.Domain.Entities
 
             FullName = string.IsNullOrWhiteSpace(fullName) ? FullName : fullName!.Trim();
             PhotoUrl = photoUrl ?? PhotoUrl;
+        }
+
+        public void SetPasswordHash(string passwordHash)
+        {
+            PasswordHash = passwordHash;
+        }
+
+        public void ClearPassword()
+        {
+            PasswordHash = null;
         }
 
         public void StartMembership(Membership membership)
