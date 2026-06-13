@@ -52,7 +52,8 @@ namespace SportVitaal.WebApi.Controllers
             if (string.IsNullOrWhiteSpace(dto.Password) || string.IsNullOrWhiteSpace(user.PasswordHash) || !SportVitaal.Application.Services.PasswordHasher.Verify(user.PasswordHash, dto.Password))
                 return Unauthorized();
 
-            var jwtKey = _config["Jwt:Key"] ?? "change-this-secret-in-production";
+            var jwtKey = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException("Jwt:Key is not configured.");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

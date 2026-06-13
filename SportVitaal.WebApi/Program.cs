@@ -13,7 +13,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 // JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "change-this-secret-in-production";
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it in appsettings.Development.json (dev) or user-secrets/environment variables (production).");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SportVitaal";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "SportVitaalClients";
 builder.Services.AddAuthentication(options =>
@@ -60,6 +61,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Basic health endpoint
 app.MapGet("/api/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
