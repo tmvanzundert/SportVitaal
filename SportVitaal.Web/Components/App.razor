@@ -15,9 +15,14 @@
 </head>
 
 <body>
-<Routes @rendermode="InteractiveServer"/>
+<Routes @rendermode="InteractiveServer" AdditionalAssemblies="WebAssemblies"/>
 <ReconnectModal/>
 <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    // Make the Web project's own pages (public + admin) routable alongside the Shared pages.
+    private static readonly System.Reflection.Assembly[] WebAssemblies = { typeof(App).Assembly };
+}

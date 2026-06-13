@@ -1,0 +1,62 @@
+@page "/aanbod"
+@inject SportVitaalApiClient Api
+
+<PageTitle>Aanbod</PageTitle>
+
+<h1>Ons aanbod</h1>
+<p>Bekijk de workouts die wij aanbieden.</p>
+
+@if (_loading)
+{
+    <p><em>Laden…</em></p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+else if (_workouts.Count == 0)
+{
+    <p>Er zijn nog geen workouts beschikbaar.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @foreach (var w in _workouts)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@w.Name</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">@w.DefaultDurationMinutes min</h6>
+                        @if (!string.IsNullOrWhiteSpace(w.Description))
+                        {
+                            <p class="card-text">@w.Description</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<WorkoutDto> _workouts = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _workouts = await Api.GetWorkoutsAsync();
+        }
+        catch
+        {
+            _error = "Het aanbod kon niet worden geladen. Probeer het later opnieuw.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

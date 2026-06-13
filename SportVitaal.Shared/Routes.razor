@@ -1,6 +1,14 @@
-﻿<Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+@using System.Reflection
+
+<Router AppAssembly="typeof(Layout.MainLayout).Assembly" AdditionalAssemblies="AdditionalAssemblies" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
 </Router>
+
+@code {
+    // Heads can supply extra assemblies to scan for routable pages.
+    // The MAUI head passes none (Shared only); the Web head passes its own assembly.
+    [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
+}

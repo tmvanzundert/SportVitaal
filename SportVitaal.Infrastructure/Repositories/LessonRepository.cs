@@ -36,6 +36,7 @@ namespace SportVitaal.Infrastructure.Repositories
         {
             return await _db.Lessons
                 .Include(l => l.Reservations)
+                .Include(l => l.Location)
                 .Where(l => l.StartAt >= from && l.StartAt <= to)
                 .ToListAsync();
         }

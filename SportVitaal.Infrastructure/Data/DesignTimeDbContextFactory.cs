@@ -9,10 +9,13 @@ namespace SportVitaal.Infrastructure.Data
     {
         public AppDbContext CreateDbContext(string[] args)
         {
-            // Default design-time connection to local MariaDB for migrations generation.
+            // Design-time connection for migration scaffolding. The server version is pinned
+            // (rather than AutoDetect) so `dotnet ef migrations add` works offline, without
+            // opening a connection to a running database.
             var cs = "Server=localhost;Port=3306;Database=SportVitaal;User=root;Password=;";
+            var serverVersion = new MariaDbServerVersion(new Version(11, 8, 6));
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseMySql(cs, ServerVersion.AutoDetect(cs))
+                .UseMySql(cs, serverVersion)
                 .Options;
 
             return new AppDbContext(options);

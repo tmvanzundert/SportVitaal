@@ -11,6 +11,11 @@ builder.Services.AddRazorComponents()
 // Add device-specific services used by the SportVitaal.Shared project
 builder.Services.AddSingleton<IFormFactor, FormFactor>();
 
+// WebApi client: typed HttpClient + per-circuit JWT holder.
+var apiBaseUrl = builder.Configuration["WebApi:BaseUrl"] ?? "http://localhost:5272";
+builder.Services.AddScoped<TokenProvider>();
+builder.Services.AddHttpClient<SportVitaalApiClient>(client => client.BaseAddress = new Uri(apiBaseUrl));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
