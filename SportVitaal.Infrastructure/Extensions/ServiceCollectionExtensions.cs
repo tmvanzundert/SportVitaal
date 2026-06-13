@@ -14,13 +14,14 @@ namespace SportVitaal.Infrastructure.Extensions
         /// <summary>
         /// Registers Infrastructure implementations for Domain repository interfaces and UnitOfWork.
         /// </summary>
-        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Repositories
             services.AddScoped<ILessonRepository, LessonRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IWorkoutRepository, WorkoutRepository>();
             services.AddScoped<ILocationRepository, LocationRepository>();
+            services.AddScoped<IInstructorRepository, InstructorRepository>();
             services.AddScoped<IReservationRepository, ReservationRepository>();
             services.AddScoped<IWaitingListRepository, WaitingListRepository>();
             services.AddScoped<IMembershipRepository, MembershipRepository>();
@@ -29,7 +30,7 @@ namespace SportVitaal.Infrastructure.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Notifications - prefer SMTP sender (configured via appsettings), fallback console is still available.
-            services.AddOptions<SmtpOptions>().Bind(services.BuildServiceProvider().GetRequiredService<IConfiguration>().GetSection("Smtp"));
+            services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
             services.AddScoped<INotificationService, SmtpEmailSender>();
 
             // Payment integration: use simulated in-memory payment service for now (no external provider)
