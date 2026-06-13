@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SportVitaal.Domain.Services;
 using SportVitaal.Domain.Enums;
@@ -16,6 +17,7 @@ namespace SportVitaal.WebApi.Controllers
         }
 
         [HttpPost("purchase")]
+        [Authorize]
         public async Task<IActionResult> Purchase([FromBody] PurchaseDto dto)
         {
             // Map membership type to prices (EUR)

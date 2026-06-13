@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SportVitaal.Domain.Repositories;
 using SportVitaal.Domain.Entities;
@@ -6,6 +7,7 @@ namespace SportVitaal.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Employee")]
     public class LessonsController : ControllerBase
     {
         private readonly ILessonRepository _lessonRepo;
@@ -22,6 +24,7 @@ namespace SportVitaal.WebApi.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetRange([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var f = from ?? DateTime.UtcNow.Date;
@@ -31,6 +34,7 @@ namespace SportVitaal.WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Get(Guid id)
         {
             var lesson = await _lessonRepo.GetByIdAsync(id);

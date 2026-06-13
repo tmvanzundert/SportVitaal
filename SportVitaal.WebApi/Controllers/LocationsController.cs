@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SportVitaal.Domain.Repositories;
 using SportVitaal.Domain.Entities;
@@ -6,6 +7,7 @@ namespace SportVitaal.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Employee")]
     public class LocationsController : ControllerBase
     {
         private readonly ILocationRepository _repo;
@@ -18,6 +20,7 @@ namespace SportVitaal.WebApi.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var items = await _repo.GetAllAsync();
@@ -25,6 +28,7 @@ namespace SportVitaal.WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Get(Guid id)
         {
             try
