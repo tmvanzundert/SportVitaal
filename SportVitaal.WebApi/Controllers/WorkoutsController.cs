@@ -11,11 +11,13 @@ namespace SportVitaal.WebApi.Controllers
     public class WorkoutsController : ControllerBase
     {
         private readonly IWorkoutRepository _repo;
+        private readonly ILessonRepository _lessonRepo;
         private readonly SportVitaal.Domain.Repositories.IUnitOfWork _uow;
 
-        public WorkoutsController(IWorkoutRepository repo, SportVitaal.Domain.Repositories.IUnitOfWork uow)
+        public WorkoutsController(IWorkoutRepository repo, ILessonRepository lessonRepo, SportVitaal.Domain.Repositories.IUnitOfWork uow)
         {
             _repo = repo;
+            _lessonRepo = lessonRepo;
             _uow = uow;
         }
 
@@ -59,6 +61,12 @@ namespace SportVitaal.WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
+            // Deleting a workout should also remove all lessons scheduled for it.
+            // Makes each lesson's reservations and waiting-list entries cascade away via EF.
+            var lessons = await _lessonRepo.GetByWorkoutIdAsync(id);
+            foreach (var lesson in lessons)
+                await _lessonRepo.DeleteAsync(lesson.Id);
+
             await _repo.DeleteAsync(id);
             await _uow.SaveChangesAsync();
             return NoContent();

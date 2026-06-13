@@ -40,6 +40,23 @@ namespace SportVitaal.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Lesson>> GetByWorkoutIdAsync(Guid workoutId)
+        {
+            return await _db.Lessons
+                .Where(l => l.WorkoutId == workoutId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Lesson>> GetForOccupancyAsync(DateTime from, DateTime to)
+        {
+            return await _db.Lessons
+                .Include(l => l.Reservations)
+                .Include(l => l.Location)
+                .Where(l => l.StartAt >= from && l.StartAt <= to)
+                .OrderBy(l => l.StartAt)
+                .ToListAsync();
+        }
+
         public Task UpdateAsync(Lesson lesson)
         {
             _db.Lessons.Update(lesson);

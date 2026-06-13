@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SportVitaal.Domain.Services;
@@ -31,7 +32,15 @@ namespace SportVitaal.WebApi.Controllers
 
             if (!prices.ContainsKey(dto.Type)) return BadRequest("Unknown membership type");
 
-            var start = dto.StartDate ?? DateTime.UtcNow.Date;
+            // The buyer is always the authenticated user, never a value from the request body.
+            var idClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(idClaim) || !Guid.TryParse(idClaim, out var userId))
+                return Unauthorized();
+
+            var today = DateTime.UtcNow.Date;
+            var start = dto.StartDate?.Date ?? today;
+            if (start < today) return BadRequest("Start date cannot be in the past.");
+
             var amount = prices[dto.Type];
 
             var metadata = new Dictionary<string,string>
@@ -40,7 +49,7 @@ namespace SportVitaal.WebApi.Controllers
                 { "startDate", start.ToString("o") }
             };
 
-            var clientSecret = await _paymentService.CreateMembershipPaymentIntentAsync(dto.UserId, amount, "EUR", metadata);
+            var clientSecret = await _paymentService.CreateMembershipPaymentIntentAsync(userId, amount, "EUR", metadata);
 
             return Ok(new { clientSecret, amount, currency = "EUR", startDate = start });
         }
@@ -48,7 +57,6 @@ namespace SportVitaal.WebApi.Controllers
 
     public class PurchaseDto
     {
-        public Guid UserId { get; set; }
         public MembershipType Type { get; set; }
         public DateTime? StartDate { get; set; }
     }

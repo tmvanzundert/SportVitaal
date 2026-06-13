@@ -12,6 +12,7 @@ namespace SportVitaal.Infrastructure.Data
         public DbSet<UserAccount> Users { get; set; } = null!;
         public DbSet<Workout> Workouts { get; set; } = null!;
         public DbSet<Location> Locations { get; set; } = null!;
+        public DbSet<Instructor> Instructors { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -51,6 +52,7 @@ namespace SportVitaal.Infrastructure.Data
             });
             modelBuilder.Entity<Workout>().HasKey(w => w.Id);
             modelBuilder.Entity<Location>().HasKey(l => l.Id);
+            modelBuilder.Entity<Instructor>().HasKey(i => i.Id);
         }
     }
 }

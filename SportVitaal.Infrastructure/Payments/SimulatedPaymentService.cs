@@ -32,22 +32,22 @@ namespace SportVitaal.Infrastructure.Payments
             return Task.FromResult(clientSecret);
         }
 
-        public Task HandleWebhookAsync(string payload, string signatureHeader, CancellationToken ct = default)
+        public async Task HandleWebhookAsync(string payload, string signatureHeader, CancellationToken ct = default)
         {
             // Expect a small JSON payload to simulate Stripe event, e.g.: { "event":"payment_succeeded", "paymentId":"<id>", "metadata": {"membershipType":"UnlimitedMonthly","startDate":"2026-06-09T00:00:00Z"} }
             try
             {
                 var doc = System.Text.Json.JsonDocument.Parse(payload);
-                if (!doc.RootElement.TryGetProperty("event", out var ev)) return Task.CompletedTask;
-                if (ev.GetString() != "payment_succeeded") return Task.CompletedTask;
-                if (!doc.RootElement.TryGetProperty("paymentId", out var pidEl)) return Task.CompletedTask;
+                if (!doc.RootElement.TryGetProperty("event", out var ev)) return;
+                if (ev.GetString() != "payment_succeeded") return;
+                if (!doc.RootElement.TryGetProperty("paymentId", out var pidEl)) return;
                 var pid = pidEl.GetString();
-                if (string.IsNullOrWhiteSpace(pid)) return Task.CompletedTask;
+                if (string.IsNullOrWhiteSpace(pid)) return;
 
                 if (!_intents.TryGetValue(pid, out var info))
                 {
                     _logger.LogWarning("Simulated payment webhook for unknown payment id {Id}", pid);
-                    return Task.CompletedTask;
+                    return;
                 }
 
                 // Optional metadata from payload overrides stored metadata
@@ -57,10 +57,10 @@ namespace SportVitaal.Infrastructure.Payments
                     foreach (var p in metaEl.EnumerateObject()) meta[p.Name] = p.Value.GetString() ?? string.Empty;
                 }
 
-                // If membershipType present, try to call MembershipService to activate membership
+                // If membershipType present, call the membership service to activate membership
                 if (meta.TryGetValue("membershipType", out var membershipType) && !string.IsNullOrWhiteSpace(membershipType))
                 {
-                    var membershipService = _sp.GetService(typeof(SportVitaal.Application.Services.MembershipService)) as SportVitaal.Application.Services.MembershipService;
+                    var membershipService = _sp.GetService(typeof(IMembershipService)) as IMembershipService;
                     if (membershipService != null)
                     {
                         if (Enum.TryParse<SportVitaal.Domain.Enums.MembershipType>(membershipType, true, out var mt))
@@ -68,13 +68,13 @@ namespace SportVitaal.Infrastructure.Payments
                             var start = DateTime.UtcNow;
                             if (meta.TryGetValue("startDate", out var sd) && DateTime.TryParse(sd, out var parsed)) start = parsed;
                             var money = new Money(info.amount, info.currency);
-                            _ = membershipService.PurchaseMembershipAsync(info.memberId, mt, start, money);
-                            _logger.LogInformation("Simulated payment succeeded and membership purchase invoked for member {MemberId}", info.memberId);
+                            await membershipService.PurchaseMembershipAsync(info.memberId, mt, start, money, ct);
+                            _logger.LogInformation("Simulated payment succeeded and membership activated for member {MemberId}", info.memberId);
                         }
                     }
                     else
                     {
-                        _logger.LogInformation("MembershipService not available in DI; simulated payment succeeded for member {MemberId}", info.memberId);
+                        _logger.LogWarning("IMembershipService not available in DI; simulated payment succeeded but membership NOT activated for member {MemberId}", info.memberId);
                     }
                 }
                 else
@@ -89,8 +89,6 @@ namespace SportVitaal.Infrastructure.Payments
             {
                 _logger.LogError(ex, "Error processing simulated payment webhook payload");
             }
-
-            return Task.CompletedTask;
         }
     }
 }

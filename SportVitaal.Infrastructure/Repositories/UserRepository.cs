@@ -27,6 +27,11 @@ namespace SportVitaal.Infrastructure.Repositories
             return await _db.Users.FindAsync(id);
         }
 
+        public async Task<IEnumerable<UserAccount>> GetByRoleAsync(SportVitaal.Domain.Enums.Role role)
+        {
+            return await _db.Users.Where(u => u.Role == role).ToListAsync();
+        }
+
         public Task UpdateAsync(UserAccount user)
         {
             _db.Users.Update(user);

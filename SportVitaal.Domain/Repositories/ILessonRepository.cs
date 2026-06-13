@@ -6,6 +6,8 @@ namespace SportVitaal.Domain.Repositories
     {
         Task<Lesson?> GetByIdAsync(Guid id);
         Task<IEnumerable<Lesson>> GetLessonsInRangeAsync(DateTime from, DateTime to);
+        Task<IEnumerable<Lesson>> GetByWorkoutIdAsync(Guid workoutId);
+        Task<IEnumerable<Lesson>> GetForOccupancyAsync(DateTime from, DateTime to);
         Task AddAsync(Lesson lesson);
         Task UpdateAsync(Lesson lesson);
         Task DeleteAsync(Guid id);

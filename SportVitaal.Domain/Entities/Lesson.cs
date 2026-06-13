@@ -40,6 +40,28 @@ namespace SportVitaal.Domain.Entities
             InstructorId = instructorId;
         }
 
+        /// <summary>
+        /// Moves the lesson to a new time/duration/location.
+        /// </summary>
+        public void Reschedule(DateTime startAt, int durationMinutes, Location location)
+        {
+            if (durationMinutes <= 0) throw new DomainException("Duration must be positive.");
+            if (startAt == DateTime.MinValue) throw new DomainException("Start time is required.");
+
+            StartAt = startAt;
+            DurationMinutes = durationMinutes;
+            Location = location ?? throw new ArgumentNullException(nameof(location));
+        }
+
+        /// <summary>
+        /// Assigns (or clears) the instructor. A null value will mean "nnb" (nog niet bekend),
+        /// also used when an instructor is replaced due to absence.
+        /// </summary>
+        public void ChangeInstructor(Guid? instructorId)
+        {
+            InstructorId = instructorId;
+        }
+
         public Reservation? Reserve(Guid memberId, int? seatNumber = null)
         {
             if (_reservations.Any(r => r.MemberId == memberId && r.Status == ReservationStatus.Reserved))

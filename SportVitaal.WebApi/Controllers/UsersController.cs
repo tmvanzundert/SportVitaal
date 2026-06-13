@@ -19,6 +19,30 @@ namespace SportVitaal.WebApi.Controllers
             _uow = uow;
         }
 
+        // Employees can see all members and their membership status.
+        [HttpGet("members")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetMembers()
+        {
+            var members = await _userRepo.GetByRoleAsync(SportVitaal.Domain.Enums.Role.Member);
+            var result = members.Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.FullName,
+                u.UserName,
+                Role = u.Role.ToString(),
+                Membership = u.Membership == null ? null : new
+                {
+                    Type = u.Membership.Type.ToString(),
+                    u.Membership.StartDate,
+                    u.Membership.EndDate,
+                    u.Membership.IsActive
+                }
+            });
+            return Ok(result);
+        }
+
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> Me()
