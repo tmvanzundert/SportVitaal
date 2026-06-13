@@ -46,7 +46,9 @@ namespace SportVitaal.WebApi.Controllers
             var metadata = new Dictionary<string,string>
             {
                 { "membershipType", dto.Type.ToString() },
-                { "startDate", start.ToString("o") }
+                // A membership start is a calendar date; store it timezone-agnostic to avoid
+                // UTC/local conversion shifting it by the server's offset.
+                { "startDate", start.ToString("yyyy-MM-dd") }
             };
 
             var clientSecret = await _paymentService.CreateMembershipPaymentIntentAsync(userId, amount, "EUR", metadata);

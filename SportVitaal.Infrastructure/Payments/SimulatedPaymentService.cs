@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SportVitaal.Domain.Services;
@@ -66,8 +67,17 @@ namespace SportVitaal.Infrastructure.Payments
                 {
                     if (Enum.TryParse<SportVitaal.Domain.Enums.MembershipType>(membershipType, true, out var mt))
                     {
-                        var start = DateTime.UtcNow;
-                        if (meta.TryGetValue("startDate", out var sd) && DateTime.TryParse(sd, out var parsed)) start = parsed;
+                        var start = DateTime.UtcNow.Date;
+                        if (meta.TryGetValue("startDate", out var sd))
+                        {
+                            // Parse the calendar date without any timezone conversion. Fall back to
+                            // round-trip parsing for any legacy ISO ("o") values still in flight.
+                            if (DateTime.TryParseExact(sd, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+                                || DateTime.TryParse(sd, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out parsed))
+                            {
+                                start = parsed;
+                            }
+                        }
                         var money = new Money(info.amount, info.currency);
 
                         using var scope = _sp.CreateScope();
