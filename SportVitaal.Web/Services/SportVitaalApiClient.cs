@@ -92,6 +92,99 @@ namespace SportVitaal.Web.Services
             return resp.IsSuccessStatusCode;
         }
 
+        // ---- Admin: locations ----
+
+        public async Task<List<LocationDto>> GetLocationsAsync(CancellationToken ct = default)
+            => await _http.GetFromJsonAsync<List<LocationDto>>("api/locations", JsonOptions, ct) ?? new();
+
+        // ---- Admin: workouts ----
+
+        public Task<bool> CreateWorkoutAsync(string name, int durationMinutes, string? description, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Post, "api/workouts", new { name, defaultDurationMinutes = durationMinutes, description }, ct);
+
+        public Task<bool> UpdateWorkoutAsync(Guid id, string name, int durationMinutes, string? description, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Put, $"api/workouts/{id}", new { name, defaultDurationMinutes = durationMinutes, description }, ct);
+
+        public Task<bool> DeleteWorkoutAsync(Guid id, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Delete, $"api/workouts/{id}", null, ct);
+
+        // ---- Admin: instructors ----
+
+        public Task<bool> CreateInstructorAsync(string name, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Post, "api/instructors", new { name }, ct);
+
+        public Task<bool> UpdateInstructorAsync(Guid id, string name, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Put, $"api/instructors/{id}", new { name }, ct);
+
+        public Task<bool> DeleteInstructorAsync(Guid id, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Delete, $"api/instructors/{id}", null, ct);
+
+        public async Task<bool> UploadInstructorPhotoAsync(Guid id, Stream content, string fileName, string contentType, CancellationToken ct = default)
+        {
+            using var form = new MultipartFormDataContent();
+            var fileContent = new StreamContent(content);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+            form.Add(fileContent, "file", fileName);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"api/instructors/{id}/photo") { Content = form };
+            Authorize(request);
+            var resp = await _http.SendAsync(request, ct);
+            return resp.IsSuccessStatusCode;
+        }
+
+        // ---- Admin: lessons ----
+
+        public Task<bool> CreateLessonAsync(Guid workoutId, Guid locationId, DateTime startAt, int durationMinutes, Guid? instructorId, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Post, "api/lessons",
+                new { workoutId, locationId, startAt, durationMinutes, instructorId }, ct);
+
+        public Task<bool> CreateRecurringLessonAsync(Guid workoutId, Guid locationId, DateTime startAt, int durationMinutes,
+            Guid? instructorId, RecurrenceFrequency frequency, int interval, DateTime? until, int? count, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Post, "api/lessons/recurring",
+                new { workoutId, locationId, startAt, durationMinutes, instructorId, frequency = (int)frequency, interval, until, count }, ct);
+
+        public Task<bool> UpdateLessonAsync(Guid id, Guid locationId, DateTime startAt, int durationMinutes, Guid? instructorId, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Put, $"api/lessons/{id}",
+                new { locationId, startAt, durationMinutes, instructorId }, ct);
+
+        public Task<bool> DeleteLessonAsync(Guid id, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Delete, $"api/lessons/{id}", null, ct);
+
+        // ---- Admin: occupancy + members ----
+
+        public async Task<List<OccupancyDto>> GetOccupancyAsync(DateTime? from = null, DateTime? to = null, CancellationToken ct = default)
+        {
+            var url = "api/lessons/occupancy";
+            var query = new List<string>();
+            if (from.HasValue) query.Add($"from={Uri.EscapeDataString(from.Value.ToString("o"))}");
+            if (to.HasValue) query.Add($"to={Uri.EscapeDataString(to.Value.ToString("o"))}");
+            if (query.Count > 0) url += "?" + string.Join("&", query);
+            return await GetAuthAsync<List<OccupancyDto>>(url, ct) ?? new();
+        }
+
+        public async Task<List<MemberDto>> GetMembersAsync(CancellationToken ct = default)
+            => await GetAuthAsync<List<MemberDto>>("api/users/members", ct) ?? new();
+
+        // ---- helpers ----
+
+        private async Task<bool> SendAuthAsync(HttpMethod method, string url, object? body, CancellationToken ct)
+        {
+            using var request = new HttpRequestMessage(method, url);
+            if (body is not null) request.Content = JsonContent.Create(body, options: JsonOptions);
+            Authorize(request);
+            var resp = await _http.SendAsync(request, ct);
+            return resp.IsSuccessStatusCode;
+        }
+
+        private async Task<T?> GetAuthAsync<T>(string url, CancellationToken ct)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            Authorize(request);
+            var resp = await _http.SendAsync(request, ct);
+            if (!resp.IsSuccessStatusCode) return default;
+            return await resp.Content.ReadFromJsonAsync<T>(JsonOptions, ct);
+        }
+
         private void Authorize(HttpRequestMessage request)
         {
             if (!string.IsNullOrWhiteSpace(_tokenProvider.Token))
@@ -133,6 +226,30 @@ namespace SportVitaal.Web.Services
     public record LoginResponse(string Token);
 
     public record PurchaseResponse(string ClientSecret, decimal Amount, string Currency, DateTime StartDate);
+
+    public record OccupancyDto(
+        Guid LessonId,
+        Guid WorkoutId,
+        DateTime StartAt,
+        int DurationMinutes,
+        Guid? LocationId,
+        string? LocationName,
+        int Capacity,
+        int Reserved,
+        Guid? InstructorId,
+        bool IsPast);
+
+    public record MemberDto(Guid Id, string Email, string? FullName, string? UserName, string Role, MembershipInfo? Membership);
+
+    public record MembershipInfo(string Type, DateTime StartDate, DateTime? EndDate, bool IsActive);
+
+    // Mirror of the WebApi RecurrenceFrequency (same order => same int values).
+    public enum RecurrenceFrequency
+    {
+        Daily = 0,
+        Weekly = 1,
+        Monthly = 2
+    }
 
     // Mirror of SportVitaal.Domain.Enums.MembershipType (Web does not reference Domain).
     public enum MembershipType

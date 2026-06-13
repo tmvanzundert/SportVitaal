@@ -1,0 +1,40 @@
+@inherits LayoutComponentBase
+@inject JwtAuthStateProvider AuthState
+@inject NavigationManager Navigation
+
+<AuthorizeView Roles="Employee">
+    <Authorized>
+        <div class="container-fluid">
+            <div class="row">
+                <nav class="col-12 col-md-3 col-lg-2 bg-light p-3 border-end">
+                    <h5 class="mb-3">Beheer</h5>
+                    <ul class="nav flex-column">
+                        <li class="nav-item"><NavLink class="nav-link" href="medewerker" Match="NavLinkMatch.All">Dashboard</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="medewerker/workouts">Workouts</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="medewerker/instructeurs">Instructeurs</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="medewerker/lessen">Lessen</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="medewerker/bezetting">Bezetting</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="medewerker/leden">Leden</NavLink></li>
+                    </ul>
+                    <hr/>
+                    <div class="small text-muted mb-2">@context.User.Identity?.Name ?? "Medewerker"</div>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="Logout">Uitloggen</button>
+                </nav>
+                <main class="col p-4">
+                    @Body
+                </main>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <RedirectToLogin/>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private async Task Logout()
+    {
+        await AuthState.LogoutAsync();
+        Navigation.NavigateTo("medewerker/login");
+    }
+}

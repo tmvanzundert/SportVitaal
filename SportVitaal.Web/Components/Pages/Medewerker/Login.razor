@@ -1,0 +1,83 @@
+@page "/medewerker/login"
+@inject SportVitaalApiClient Api
+@inject JwtAuthStateProvider AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Medewerker login</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-6 col-lg-4">
+        <h1 class="h3 mb-3">Medewerker login</h1>
+
+        @if (_error is not null)
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+
+        <EditForm Model="this" OnValidSubmit="SubmitAsync">
+            <div class="mb-3">
+                <label class="form-label" for="email">E-mailadres</label>
+                <InputText id="email" class="form-control" @bind-Value="_email"/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="password">Wachtwoord</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="_password"/>
+            </div>
+            <button type="submit" class="btn btn-primary" disabled="@_busy">
+                @(_busy ? "Bezig…" : "Inloggen")
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private bool _busy;
+    private string? _error;
+
+    private async Task SubmitAsync()
+    {
+        _error = null;
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Vul je e-mailadres en wachtwoord in.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var (ok, err) = await Api.LoginAsync(_email, _password);
+            if (!ok)
+            {
+                _error = err ?? "Inloggen mislukt.";
+                return;
+            }
+
+            await AuthState.MarkAuthenticatedAsync();
+
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (!state.User.IsInRole("Employee"))
+            {
+                await AuthState.LogoutAsync();
+                _error = "Dit account heeft geen toegang tot het beheer.";
+                return;
+            }
+
+            var target = string.IsNullOrWhiteSpace(ReturnUrl) ? "medewerker" : Uri.UnescapeDataString(ReturnUrl);
+            Navigation.NavigateTo(target);
+        }
+        catch
+        {
+            _error = "Er ging iets mis bij het inloggen. Probeer het later opnieuw.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

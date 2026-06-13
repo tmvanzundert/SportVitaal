@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using SportVitaal.Web.Components;
 using SportVitaal.Shared.Services;
 using SportVitaal.Web.Services;
@@ -15,6 +16,12 @@ builder.Services.AddSingleton<IFormFactor, FormFactor>();
 var apiBaseUrl = builder.Configuration["WebApi:BaseUrl"] ?? "http://localhost:5272";
 builder.Services.AddScoped<TokenProvider>();
 builder.Services.AddHttpClient<SportVitaalApiClient>(client => client.BaseAddress = new Uri(apiBaseUrl));
+
+// Employee authentication (JWT-backed) for the /medewerker admin area.
+builder.Services.AddScoped<JwtAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
 
 var app = builder.Build();
 
