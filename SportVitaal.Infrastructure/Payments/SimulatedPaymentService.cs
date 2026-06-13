@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SportVitaal.Domain.Services;
 using SportVitaal.Domain.ValueObjects;
@@ -14,8 +15,10 @@ namespace SportVitaal.Infrastructure.Payments
         private readonly ILogger<SimulatedPaymentService> _logger;
         private readonly IServiceProvider _sp;
 
-        // store simple in-memory payment intents: id -> (memberId, amount, currency, metadata)
-        private readonly Dictionary<string, (Guid memberId, decimal amount, string currency, IDictionary<string,string> metadata)> _intents = new();
+        // Stores in-memory payment intents: id -> (memberId, amount, currency, metadata).
+        // This service is a singleton so intents survive between the purchase request and the
+        // later webhook request; ConcurrentDictionary guards against concurrent access.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (Guid memberId, decimal amount, string currency, IDictionary<string,string> metadata)> _intents = new();
 
         public SimulatedPaymentService(ILogger<SimulatedPaymentService> logger, IServiceProvider sp)
         {
@@ -57,24 +60,20 @@ namespace SportVitaal.Infrastructure.Payments
                     foreach (var p in metaEl.EnumerateObject()) meta[p.Name] = p.Value.GetString() ?? string.Empty;
                 }
 
-                // If membershipType present, call the membership service to activate membership
+                // If membershipType present, activate the membership. This service is a singleton,
+                // so resolve the scoped IMembershipService (and its DbContext) from a fresh scope.
                 if (meta.TryGetValue("membershipType", out var membershipType) && !string.IsNullOrWhiteSpace(membershipType))
                 {
-                    var membershipService = _sp.GetService(typeof(IMembershipService)) as IMembershipService;
-                    if (membershipService != null)
+                    if (Enum.TryParse<SportVitaal.Domain.Enums.MembershipType>(membershipType, true, out var mt))
                     {
-                        if (Enum.TryParse<SportVitaal.Domain.Enums.MembershipType>(membershipType, true, out var mt))
-                        {
-                            var start = DateTime.UtcNow;
-                            if (meta.TryGetValue("startDate", out var sd) && DateTime.TryParse(sd, out var parsed)) start = parsed;
-                            var money = new Money(info.amount, info.currency);
-                            await membershipService.PurchaseMembershipAsync(info.memberId, mt, start, money, ct);
-                            _logger.LogInformation("Simulated payment succeeded and membership activated for member {MemberId}", info.memberId);
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("IMembershipService not available in DI; simulated payment succeeded but membership NOT activated for member {MemberId}", info.memberId);
+                        var start = DateTime.UtcNow;
+                        if (meta.TryGetValue("startDate", out var sd) && DateTime.TryParse(sd, out var parsed)) start = parsed;
+                        var money = new Money(info.amount, info.currency);
+
+                        using var scope = _sp.CreateScope();
+                        var membershipService = scope.ServiceProvider.GetRequiredService<IMembershipService>();
+                        await membershipService.PurchaseMembershipAsync(info.memberId, mt, start, money, ct);
+                        _logger.LogInformation("Simulated payment succeeded and membership activated for member {MemberId}", info.memberId);
                     }
                 }
                 else
@@ -83,7 +82,7 @@ namespace SportVitaal.Infrastructure.Payments
                 }
 
                 // remove intent
-                _intents.Remove(pid);
+                _intents.TryRemove(pid, out _);
             }
             catch (Exception ex)
             {

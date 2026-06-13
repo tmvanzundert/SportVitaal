@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SportVitaal.Domain.DomainEvents;
@@ -12,16 +13,16 @@ namespace SportVitaal.Infrastructure.HostedServices
     /// </summary>
     public class MembershipExpiryHostedService : IHostedService, IDisposable
     {
-        private readonly AppDbContext _db;
-        private readonly IDomainEventDispatcher _dispatcher;
+        // The hosted service is a singleton, so scoped services (AppDbContext, the dispatcher)
+        // must be resolved from a per-iteration scope rather than injected directly.
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<MembershipExpiryHostedService> _logger;
         private CancellationTokenSource? _cts;
         private Task? _executingTask;
 
-        public MembershipExpiryHostedService(AppDbContext db, IDomainEventDispatcher dispatcher, ILogger<MembershipExpiryHostedService> logger)
+        public MembershipExpiryHostedService(IServiceScopeFactory scopeFactory, ILogger<MembershipExpiryHostedService> logger)
         {
-            _db = db;
-            _dispatcher = dispatcher;
+            _scopeFactory = scopeFactory;
             _logger = logger;
         }
 
@@ -42,7 +43,11 @@ namespace SportVitaal.Infrastructure.HostedServices
                     var target = DateTime.UtcNow.Date.AddDays(42); // ~6 weeks from now
                     var nextDay = target.AddDays(1);
 
-                    var users = await _db.Users
+                    using var scope = _scopeFactory.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var dispatcher = scope.ServiceProvider.GetRequiredService<IDomainEventDispatcher>();
+
+                    var users = await db.Users
                         .AsNoTracking()
                         .Where(u => u.Membership != null && u.Membership.EndDate != null && u.Membership.EndDate >= target && u.Membership.EndDate < nextDay)
                         .ToListAsync(stoppingToken);
@@ -50,7 +55,7 @@ namespace SportVitaal.Infrastructure.HostedServices
                     foreach (var user in users)
                     {
                         var ev = new MembershipExpiringSoonEvent(Guid.Empty, user.Id, user.Membership!.EndDate!.Value);
-                        await _dispatcher.DispatchAsync(ev);
+                        await dispatcher.DispatchAsync(ev);
                         _logger.LogInformation("Dispatched MembershipExpiringSoonEvent for user {UserId}", user.Id);
                     }
                 }

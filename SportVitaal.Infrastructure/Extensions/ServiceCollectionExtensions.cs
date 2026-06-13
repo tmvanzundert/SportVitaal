@@ -33,8 +33,9 @@ namespace SportVitaal.Infrastructure.Extensions
             services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
             services.AddScoped<INotificationService, SmtpEmailSender>();
 
-            // Payment integration: use simulated in-memory payment service for now (no external provider)
-            services.AddScoped<IPaymentService, Payments.SimulatedPaymentService>();
+            // Payment integration: simulated in-memory payment service (no external provider).
+            // Singleton so payment intents persist between the purchase and the later webhook call.
+            services.AddSingleton<IPaymentService, Payments.SimulatedPaymentService>();
 
             // Hosted services
             services.AddHostedService<HostedServices.MembershipExpiryHostedService>();
