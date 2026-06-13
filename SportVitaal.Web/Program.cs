@@ -5,6 +5,9 @@ using SportVitaal.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Let the shared Router discover this project's own (public + admin) pages.
+SportVitaal.Shared.RouteAssemblyRegistry.Additional = new[] { typeof(Program).Assembly };
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
