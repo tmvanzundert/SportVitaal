@@ -39,7 +39,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(cs, ServerVersion.AutoDetect(cs)));
 
 // Register infrastructure services
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Register application services (domain service implementations, event dispatcher, etc.)
 builder.Services.AddApplicationServices();
@@ -61,6 +61,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Serve uploaded files.
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
