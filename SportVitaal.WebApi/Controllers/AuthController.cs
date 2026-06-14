@@ -57,10 +57,15 @@ namespace SportVitaal.WebApi.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var displayName = !string.IsNullOrWhiteSpace(user.FullName) ? user.FullName!
+                : !string.IsNullOrWhiteSpace(user.UserName) ? user.UserName!
+                : user.Email;
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, displayName),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email)
             };

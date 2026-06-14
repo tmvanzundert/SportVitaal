@@ -71,8 +71,10 @@ namespace SportVitaal.Web.Services
             if (expiresAt is not null && expiresAt <= DateTimeOffset.UtcNow)
                 return Anonymous;
 
-            // Tokens from AuthController use the standard ClaimTypes URIs for name id and role.
-            var identity = new ClaimsIdentity(claims, "jwt", ClaimTypes.NameIdentifier, ClaimTypes.Role);
+            // Tokens from AuthController use the standard ClaimTypes URIs for name and role.
+            // Identity.Name resolves to the display name claim (FullName/UserName/Email);
+            // the user id stays available via the NameIdentifier claim.
+            var identity = new ClaimsIdentity(claims, "jwt", ClaimTypes.Name, ClaimTypes.Role);
             return new ClaimsPrincipal(identity);
         }
 
