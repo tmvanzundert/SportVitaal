@@ -107,7 +107,6 @@ namespace SportVitaal.Infrastructure.Payments
                     _logger.LogInformation("Simulated payment succeeded for member {MemberId} (no membership metadata)", info.memberId);
                 }
 
-                // remove intent
                 _intents.TryRemove(pid, out _);
             }
             catch (Exception ex)

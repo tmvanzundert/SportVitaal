@@ -1,6 +1,5 @@
 namespace SportVitaal.Domain.ValueObjects
 {
-    // Simple base for value objects
     public abstract class ValueObject
     {
         protected abstract IEnumerable<object?> GetEqualityComponents();

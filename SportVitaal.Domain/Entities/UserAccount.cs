@@ -5,16 +5,14 @@ namespace SportVitaal.Domain.Entities
 {
     public class UserAccount : BaseEntity
     {
-        // This fixes the database not being able to process the attributes via Pomelo.
-        // We want to keep the properties private set to enforce invariants,
-        // but EF needs a parameterless constructor.
+        // EF needs a parameterless constructor; keep setters private to enforce invariants.
         protected UserAccount() { }
 
         public string Email { get; private set; } = null!;
         public string? UserName { get; private set; }
         public string? FullName { get; private set; }
         public string? PhotoUrl { get; private set; }
-        // Password hash (store hashed password); null when using external auth or not set yet
+        // Null when using external auth or not set yet.
         public string? PasswordHash { get; private set; }
         public Role Role { get; private set; }
         public bool IsActive { get; private set; }

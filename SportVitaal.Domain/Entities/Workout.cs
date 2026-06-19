@@ -4,9 +4,7 @@ namespace SportVitaal.Domain.Entities
 {
     public class Workout : BaseEntity
     {
-        // This fixes the database not being able to process the attributes via Pomelo.
-        // We want to keep the properties private set to enforce invariants,
-        // but EF needs a parameterless constructor.
+        // EF needs a parameterless constructor; keep setters private to enforce invariants.
         protected Workout() { }
         public string Name { get; private set; } = null!;
         public string? Description { get; private set; }

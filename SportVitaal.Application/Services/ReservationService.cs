@@ -190,7 +190,6 @@ namespace SportVitaal.Application.Services
             var next = waiting.OrderBy(w => w.CreatedAt).FirstOrDefault();
             if (next == null) return; // nothing to promote
 
-            // Check capacity
             var reservedCount = lesson.Reservations.Count(r => r.Status == ReservationStatus.Reserved);
             if (reservedCount >= lesson.Capacity) return;
 
@@ -200,7 +199,6 @@ namespace SportVitaal.Application.Services
             // Add explicitly so the client-generated key is tracked as Added (insert), not Modified.
             await _reservationRepository.AddAsync(reservation, ct);
 
-            // remove waiting list entry
             await _waitingListRepository.RemoveAsync(next, ct);
 
             await _unitOfWork.SaveChangesAsync(ct);
@@ -208,7 +206,6 @@ namespace SportVitaal.Application.Services
             var createdEvent = new ReservationCreatedEvent(reservation.Id, reservation.LessonId, reservation.MemberId);
             await _dispatcher.DispatchAsync(createdEvent);
 
-            // dispatch any additional domain events
             foreach (var ev in lesson.DomainEvents)
             {
                 await _dispatcher.DispatchAsync(ev);

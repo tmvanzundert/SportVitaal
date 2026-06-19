@@ -5,9 +5,7 @@ namespace SportVitaal.Domain.Entities
 {
     public class Lesson : BaseEntity
     {
-        // This fixes the database not being able to process the attributes via Pomelo.
-        // We want to keep the properties private set to enforce invariants,
-        // but EF needs a parameterless constructor.
+        // EF needs a parameterless constructor; keep setters private to enforce invariants.
         protected Lesson() { Location = null!; }
 
         public Guid WorkoutId { get; private set; }
@@ -69,7 +67,6 @@ namespace SportVitaal.Domain.Entities
 
             if (_reservations.Count(r => r.Status == ReservationStatus.Reserved) >= Capacity)
             {
-                // add to waiting list
                 var existing = _waitingList.FirstOrDefault(w => w.MemberId == memberId);
                 if (existing != null) throw new DomainException("Member already on waiting list.");
                 var entry = new WaitingListEntry(Id, memberId);
