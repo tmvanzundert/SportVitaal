@@ -1,0 +1,12 @@
+@* Authenticated portal router: scans only this MAUI assembly, so the Web app's shared pages stay out. *@
+<Router AppAssembly="@typeof(MauiProgram).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="@typeof(Layout.PortalLayout)"/>
+        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(Layout.PortalLayout)">
+            <p style="padding:1rem">Pagina niet gevonden.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

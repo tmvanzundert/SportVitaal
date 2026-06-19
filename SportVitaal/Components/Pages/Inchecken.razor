@@ -1,0 +1,112 @@
+@page "/inchecken"
+@page "/inchecken/{LessonId:guid}"
+@inject SportVitaal.ViewModels.CheckInViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("/")' aria-label="Terug">←</button>
+        <h1>Inchecken</h1>
+    </header>
+
+    @if (Vm.Loaded && !Vm.HasLesson)
+    {
+        <section class="card empty">
+            <span class="empty-icon">🗓️</span>
+            <strong>Geen les om in te checken</strong>
+            <p class="muted center">Inchecken kan vanaf 30 minuten voor aanvang van een gereserveerde les.</p>
+        </section>
+    }
+    else if (Vm.HasLesson)
+    {
+        <section class="card lesinfo">
+            <span class="label">HUIDIGE LES</span>
+            <div class="lesrow">
+                <span class="les-icon">🚲</span>
+                <div>
+                    <strong>@Vm.Workout</strong>
+                    <div class="muted">@Vm.TimeRange · @Vm.Location</div>
+                </div>
+            </div>
+        </section>
+
+        @if (Vm.CheckedIn)
+        {
+            <section class="card success">
+                <span class="check">✓</span>
+                <strong>Je bent ingecheckt</strong>
+                <p class="muted center">Veel plezier met de les!</p>
+            </section>
+        }
+        else
+        {
+            <div class="tabs">
+                <button class="tab @(Vm.UseGps ? "active" : "")" @onclick="OnSelectGps">📍 GPS</button>
+                <button class="tab @(!Vm.UseGps ? "active" : "")" @onclick="() => Vm.SelectRfidCommand.Execute(null)">💳 RFID</button>
+            </div>
+
+            @if (Vm.Message is not null)
+            {
+                <div class="notice @(Vm.MessageIsError ? "notice-error" : "notice-ok")">@Vm.Message</div>
+            }
+
+            @if (Vm.UseGps)
+            {
+                <section class="stage card">
+                    <div class="pulse @(Vm.IsBusy ? "busy" : "")"><span class="big">📍</span></div>
+                    <h3 class="stage-title">@(Vm.IsBusy ? (Vm.GpsStatus ?? "GPS locatie bepalen…") : "Inchecken met GPS")</h3>
+                    <p class="muted center">
+                        @(Vm.IsBusy
+                            ? "Je locatie wordt geverifieerd. Dit duurt een paar seconden."
+                            : "We controleren of je je bij de sportclub bevindt.")
+                    </p>
+                    @if (!Vm.IsBusy && Vm.Message is not null)
+                    {
+                        <button class="primary" @onclick="() => Vm.CheckInGpsCommand.ExecuteAsync(null)">Opnieuw proberen</button>
+                    }
+                </section>
+            }
+            else
+            {
+                <section class="stage card">
+                    <div class="pulse"><span class="big">💳</span></div>
+                    <h3 class="stage-title">Houd je pas voor de scanner</h3>
+                    <p class="muted center">Gebruik de RFID-scanner bij de ingang van de zaal.</p>
+                    <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.SimulateRfidCommand.ExecuteAsync(null)">Simuleer scan</button>
+                </section>
+            }
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? LessonId { get; set; }
+
+    private bool _gpsAutoStarted;
+
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(LessonId);
+
+    // The mockup shows GPS auto-determining on entry. Kick off the location read once the lesson is
+    // loaded and the GPS tab is active; a failure leaves a message so it does not auto-retry in a loop.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_gpsAutoStarted && Vm.HasLesson && Vm.UseGps && !Vm.CheckedIn && !Vm.IsBusy && Vm.Message is null)
+        {
+            _gpsAutoStarted = true;
+            await Vm.CheckInGpsCommand.ExecuteAsync(null);
+        }
+    }
+
+    private void OnSelectGps()
+    {
+        _gpsAutoStarted = false; // allow the auto-start to fire again for this fresh attempt
+        Vm.SelectGpsCommand.Execute(null);
+    }
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

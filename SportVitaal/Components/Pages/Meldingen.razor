@@ -1,0 +1,57 @@
+@page "/meldingen"
+@inject SportVitaal.ViewModels.NotificationsViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("")' aria-label="Terug">←</button>
+        <div>
+            <h1>Meldingen</h1>
+            <p class="sub">@(Vm.HasUnread ? $"{Vm.UnreadCount} ongelezen" : "Alles gelezen")</p>
+        </div>
+        @if (Vm.HasUnread)
+        {
+            <button class="read-all" @onclick="() => Vm.MarkAllReadCommand.ExecuteAsync(null)">Alles gelezen</button>
+        }
+    </header>
+
+    @if (!Vm.Loaded)
+    {
+        <p class="muted">Laden…</p>
+    }
+    else if (Vm.Count == 0)
+    {
+        <p class="empty">Je hebt nog geen meldingen.</p>
+    }
+    else
+    {
+        @foreach (var n in Vm.Items)
+        {
+            <div class="card melding @(n.Read ? "" : "unread")"
+                 @onclick="() => Vm.MarkReadCommand.ExecuteAsync(n.Id)">
+                <span class="melding-icon">@n.Icon</span>
+                <div class="melding-body">
+                    <strong>@n.Title</strong>
+                    <span class="muted">@n.Body</span>
+                    <span class="when">@n.When</span>
+                </div>
+                @if (!n.Read)
+                {
+                    <span class="dot" aria-label="Ongelezen"></span>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(null);
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

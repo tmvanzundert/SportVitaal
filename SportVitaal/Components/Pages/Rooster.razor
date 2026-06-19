@@ -1,0 +1,75 @@
+@page "/rooster"
+@inject SportVitaal.ViewModels.ScheduleViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("")' aria-label="Terug">←</button>
+        <div>
+            <h1>Lesrooster</h1>
+            <p class="sub">Week @Vm.WeekNumber · @Vm.Year</p>
+        </div>
+        <div class="weeknav">
+            <button @onclick="() => Vm.PreviousWeekCommand.ExecuteAsync(null)" aria-label="Vorige week">‹</button>
+            <button @onclick="() => Vm.NextWeekCommand.ExecuteAsync(null)" aria-label="Volgende week">›</button>
+        </div>
+    </header>
+
+    <div class="days">
+        @foreach (var day in Vm.Days)
+        {
+            <button class="day @(day.IsSelected ? "day-on" : "")" @onclick="() => Vm.SelectDayCommand.Execute(day.Date)">
+                <span class="day-abbr">@day.Abbr</span>
+                <span class="day-num">@day.Day</span>
+            </button>
+        }
+    </div>
+
+    @foreach (var lesson in Vm.Lessons)
+    {
+        <div class="card lesson clickable" style="border-left-color:@lesson.Accent" @onclick='() => Nav.NavigateTo($"les/{lesson.LessonId}")'>
+            <div class="lesson-top">
+                <div>
+                    <strong>@lesson.Workout</strong>
+                    <div class="time">@lesson.Time</div>
+                </div>
+                @if (lesson.ReservedByMe)
+                {
+                    <span class="pill pill-done">Gereserveerd</span>
+                }
+                else if (lesson.Full)
+                {
+                    <span class="pill pill-full">VOL</span>
+                }
+                else
+                {
+                    <span class="chev">›</span>
+                }
+            </div>
+            <div class="lesson-bottom">
+                <span class="instr"><span class="ic">👤</span>@lesson.Instructor</span>
+                <div class="occ">
+                    <div class="bar"><span style="width:@(lesson.Percent)%;background:@(lesson.Full ? "#e2483d" : lesson.Accent)"></span></div>
+                    <span class="count">@lesson.Count</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Vm.Loaded && Vm.Lessons.Count == 0)
+    {
+        <p class="empty">Geen lessen op deze dag.</p>
+    }
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(null);
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

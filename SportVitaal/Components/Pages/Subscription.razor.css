@@ -1,0 +1,280 @@
+.screen {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
+    background: #f2f3f5;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.5rem;
+}
+
+.back {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.head h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.sub {
+    margin: .1rem 0 0;
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    text-transform: uppercase;
+}
+
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+    margin-bottom: 1rem;
+}
+
+.muted {
+    color: #8e8e93;
+    font-size: .8rem;
+}
+
+.block {
+    display: block;
+    margin-bottom: .8rem;
+    letter-spacing: .08em;
+}
+
+.accent {
+    color: #f26522;
+}
+
+/* Current-plan banner */
+.current {
+    display: flex;
+    /* Override Bootstrap's .card { flex-direction: column } so the icon sits beside the text. */
+    flex-direction: row;
+    align-items: center;
+    gap: .9rem;
+    background: #fdeee4;
+    border: 1px solid #f7d4bd;
+}
+
+.current .check {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #f26522;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.current .muted {
+    display: block;
+    letter-spacing: .08em;
+    font-size: .7rem;
+}
+
+.current strong {
+    font-size: 1.05rem;
+}
+
+/* Payment info rows */
+.info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .7rem 0;
+    border-top: 1px solid #f0f0f1;
+}
+
+.info-row:first-of-type {
+    border-top: none;
+}
+
+.info-row span {
+    color: #6c6c70;
+}
+
+.pay {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: #1c1c1e !important;
+    letter-spacing: .15em;
+}
+
+.ideal {
+    background: #1a1f71;
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    padding: .15rem .35rem;
+    border-radius: 4px;
+}
+
+.section {
+    margin: 1.4rem 0 .8rem;
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Plan cards */
+.plan-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.plan-current {
+    background: #fdeee4;
+    border: 1px solid #f7d4bd;
+}
+
+.badge {
+    background: #f26522;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    padding: .25rem .6rem;
+    border-radius: 999px;
+}
+
+.plan-price {
+    margin: .5rem 0 .8rem;
+    color: #6c6c70;
+    font-size: .85rem;
+}
+
+.big {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.plan ul {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.plan li {
+    position: relative;
+    padding-left: 1.6rem;
+    margin-bottom: .5rem;
+    font-size: .9rem;
+}
+
+.plan li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: .7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.plan li.on::before {
+    background: #f26522;
+}
+
+.plan li.off {
+    color: #8e8e93;
+}
+
+.plan li.off::before {
+    background: #cfcfd2;
+}
+
+.primary {
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+    background: #f26522;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: .9rem;
+    cursor: pointer;
+}
+
+.secondary {
+    width: 100%;
+    border: 1px solid #e3e4e7;
+    border-radius: 14px;
+    background: #fff;
+    color: #1c1c1e;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: .9rem;
+    cursor: pointer;
+    margin-bottom: .6rem;
+}
+
+.cancel {
+    width: 100%;
+    border: 1px solid #f3c9c9;
+    border-radius: 14px;
+    background: #fdeeee;
+    color: #c0392b;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: .9rem;
+    cursor: pointer;
+    margin-top: .5rem;
+}
+
+.primary:disabled, .secondary:disabled, .cancel:disabled {
+    opacity: .6;
+}
+
+.notice {
+    border-radius: 12px;
+    padding: .8rem 1rem;
+    font-size: .9rem;
+    margin-bottom: 1rem;
+}
+
+.notice-ok {
+    background: #e7f6ec;
+    color: #1e7e45;
+}
+
+.notice-error {
+    background: #fde8e8;
+    color: #b42318;
+}
+
+.footnote {
+    text-align: center;
+    color: #8e8e93;
+    font-size: .8rem;
+    margin: .8rem 0 0;
+}

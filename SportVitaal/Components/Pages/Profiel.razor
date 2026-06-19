@@ -1,0 +1,64 @@
+@page "/profiel"
+@inject SportVitaal.ViewModels.ProfileViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("")' aria-label="Terug">←</button>
+        <div>
+            <h1>Mijn Profiel</h1>
+            <p class="sub">Account instellingen</p>
+        </div>
+    </header>
+
+    @if (Vm.Message is not null)
+    {
+        <div class="notice @(Vm.MessageIsError ? "notice-error" : "notice-ok")">@Vm.Message</div>
+    }
+
+    <section class="card profile">
+        <div class="avatar-wrap">
+            @if (Vm.PhotoDataUri is not null)
+            {
+                <img class="avatar-img" src="@Vm.PhotoDataUri" alt="Profielfoto"/>
+            }
+            else
+            {
+                <div class="avatar">@Vm.Initials</div>
+            }
+            <span class="dot"></span>
+        </div>
+        <strong class="pname">@Vm.FullName</strong>
+        <span class="muted">Lid sinds @Vm.LidSindsLower</span>
+        <div class="photo-actions">
+            <button class="chip" disabled="@Vm.IsBusy" @onclick="() => Vm.PickFromGalleryCommand.ExecuteAsync(null)">🖼 Galerij</button>
+            <button class="chip" disabled="@Vm.IsBusy" @onclick="() => Vm.CaptureFromCameraCommand.ExecuteAsync(null)">📷 Camera</button>
+        </div>
+    </section>
+
+    <h3 class="section">Persoonlijke gegevens</h3>
+    <label class="label">Naam</label>
+    <input class="input" @bind="Vm.FullName" @bind:event="oninput"/>
+
+    <label class="label">Gebruikersnaam</label>
+    <input class="input" @bind="Vm.UserName" @bind:event="oninput" placeholder="Zichtbaar voor andere leden"/>
+    <p class="hint">Zichtbaar voor andere leden</p>
+
+    <label class="label">E-mailadres</label>
+    <input class="input" value="@Vm.Email" readonly/>
+
+    <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.SaveCommand.ExecuteAsync(null)">Wijzigingen opslaan</button>
+    <button class="logout" @onclick="() => Vm.LogoutCommand.Execute(null)">Uitloggen</button>
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(null);
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

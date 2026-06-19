@@ -1,0 +1,250 @@
+.screen {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
+    background: #f2f3f5;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.3rem;
+}
+
+.back {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.head h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+    margin-bottom: 1rem;
+}
+
+.muted {
+    color: #8e8e93;
+    font-size: .85rem;
+}
+
+.center {
+    text-align: center;
+}
+
+/* Current-lesson card */
+.label {
+    display: block;
+    font-size: .68rem;
+    letter-spacing: .12em;
+    color: #8e8e93;
+    margin-bottom: .7rem;
+}
+
+.lesrow {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+}
+
+.les-icon {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #fdeee4;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lesrow strong {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+/* GPS / RFID segmented control */
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .4rem;
+    background: #fff;
+    border-radius: 14px;
+    padding: .35rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+    margin-bottom: 1rem;
+}
+
+.tab {
+    border: none;
+    border-radius: 11px;
+    background: transparent;
+    padding: .75rem;
+    font-size: .95rem;
+    font-weight: 600;
+    color: #6c6c70;
+    cursor: pointer;
+}
+
+.tab.active {
+    background: #f26522;
+    color: #fff;
+}
+
+/* Stage (pulsing target) */
+.stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2.6rem 1.2rem;
+}
+
+.pulse {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ececee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem 0 1.8rem;
+    position: relative;
+}
+
+.pulse .big {
+    font-size: 2.2rem;
+}
+
+/* Animated rings while a GPS read is in progress */
+.pulse.busy::before,
+.pulse.busy::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid #f26522;
+    opacity: 0;
+    animation: ring 1.8s ease-out infinite;
+}
+
+.pulse.busy::after {
+    animation-delay: .9s;
+}
+
+@keyframes ring {
+    0% { transform: scale(1); opacity: .5; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+.stage-title {
+    margin: 0 0 .4rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.stage .muted {
+    max-width: 16rem;
+    line-height: 1.5;
+}
+
+/* Success state */
+.success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2.2rem 1.2rem;
+}
+
+.success .check {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e7f6ec;
+    color: #1e7e45;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.success strong {
+    font-size: 1.15rem;
+}
+
+/* Empty state */
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2.4rem 1.2rem;
+}
+
+.empty-icon {
+    font-size: 2.2rem;
+    margin-bottom: .8rem;
+}
+
+.empty strong {
+    font-size: 1.1rem;
+}
+
+/* Buttons */
+.primary {
+    width: 100%;
+    max-width: 22rem;
+    border: none;
+    border-radius: 14px;
+    background: #f26522;
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 1rem;
+    cursor: pointer;
+    margin-top: 1.6rem;
+}
+
+.primary:disabled {
+    opacity: .6;
+    cursor: default;
+}
+
+/* Notices */
+.notice {
+    border-radius: 12px;
+    padding: .8rem 1rem;
+    font-size: .9rem;
+    margin-bottom: 1rem;
+}
+
+.notice-ok {
+    background: #e7f6ec;
+    color: #1e7e45;
+}
+
+.notice-error {
+    background: #fde8e8;
+    color: #b42318;
+}

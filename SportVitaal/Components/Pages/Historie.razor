@@ -1,0 +1,49 @@
+@page "/historie"
+@inject SportVitaal.ViewModels.HistoryViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("")' aria-label="Terug">←</button>
+        <div>
+            <h1>Historie</h1>
+            <p class="sub">Afgelopen jaar</p>
+        </div>
+    </header>
+
+    @if (!Vm.Loaded)
+    {
+        <p class="muted">Laden…</p>
+    }
+    else if (Vm.Count == 0)
+    {
+        <p class="empty">Je hebt het afgelopen jaar nog geen lessen meegedaan.</p>
+    }
+    else
+    {
+        <h3 class="section">@Vm.Count @(Vm.Count == 1 ? "les" : "lessen") meegedaan</h3>
+        @foreach (var lesson in Vm.Lessons)
+        {
+            <div class="card lesson">
+                <span class="lesson-icon">🕑</span>
+                <div class="lesson-body">
+                    <strong>@lesson.Workout</strong>
+                    <span class="muted">@lesson.When · @lesson.Instructor</span>
+                </div>
+                <span class="dur">@lesson.Duration</span>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(null);
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

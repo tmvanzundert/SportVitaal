@@ -1,0 +1,92 @@
+@page "/abonnement"
+@inject SportVitaal.ViewModels.SubscriptionViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("")' aria-label="Terug">←</button>
+        <div>
+            <h1>Mijn Abonnement</h1>
+            <p class="sub">Lidmaatschap beheer</p>
+        </div>
+    </header>
+
+    @if (Vm.Message is not null)
+    {
+        <div class="notice @(Vm.MessageIsError ? "notice-error" : "notice-ok")">@Vm.Message</div>
+    }
+
+    <section class="card current">
+        <span class="check">✓</span>
+        <div>
+            <span class="muted">HUIDIG PLAN</span>
+            <strong>@Vm.CurrentSummary</strong>
+        </div>
+    </section>
+
+    @if (Vm.HasPlan)
+    {
+        <section class="card">
+            <span class="muted block">BETALINGSINFO</span>
+            <div class="info-row"><span>Type</span><strong>@Vm.Billing</strong></div>
+            <div class="info-row"><span>Bedrag</span><strong>@Vm.Bedrag</strong></div>
+            <div class="info-row"><span>Volgende betaling</span><strong class="accent">@Vm.VolgendeBetaling</strong></div>
+            <div class="info-row"><span>Betaalmethode</span><span class="pay"><span class="ideal">iDEAL</span> @Vm.PaymentMethod</span></div>
+        </section>
+    }
+
+    <h3 class="section">Beschikbare plannen</h3>
+    @foreach (var plan in Vm.Plans)
+    {
+        <section class="card plan @(plan.IsCurrent ? "plan-current" : "")">
+            <div class="plan-head">
+                <strong>@plan.Name</strong>
+                @if (plan.IsCurrent)
+                {
+                    <span class="badge">HUIDIG</span>
+                }
+            </div>
+            <p class="plan-price"><span class="accent big">€@plan.Price</span> per maand</p>
+            <ul>
+                @foreach (var feature in plan.Features)
+                {
+                    <li class="@(plan.IsCurrent ? "on" : "off")">@feature</li>
+                }
+            </ul>
+
+            @if (!Vm.HasPlan)
+            {
+                <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.PurchaseCommand.ExecuteAsync(plan)">Kies dit plan</button>
+            }
+            else if (!plan.IsCurrent && Vm.CanUpgrade)
+            {
+                <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.UpgradeCommand.ExecuteAsync(null)">Uitbreiden naar @plan.Name</button>
+            }
+        </section>
+    }
+
+    @if (Vm.HasPlan)
+    {
+        <button class="secondary" disabled="@Vm.IsBusy" @onclick="() => Vm.RenewCommand.ExecuteAsync(null)">Verleng abonnement</button>
+
+        @if (Vm.CanCancel)
+        {
+            <button class="cancel" disabled="@Vm.IsBusy" @onclick="() => Vm.CancelCommand.ExecuteAsync(null)">Abonnement opzeggen</button>
+            <p class="footnote">Opzegging geldt per einde van de lopende periode</p>
+        }
+        else
+        {
+            <p class="footnote">Een jaarabonnement kan niet tussentijds worden opgezegd.</p>
+        }
+    }
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

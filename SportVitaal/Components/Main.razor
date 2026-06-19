@@ -1,0 +1,31 @@
+@using SportVitaal.Services
+@inject ApiClient Api
+@implements IDisposable
+
+@if (!_ready)
+{
+    <div class="splash">Sport Vitaal</div>
+}
+else if (Api.IsLoggedIn)
+{
+    <Routes />
+}
+else
+{
+    <Login />
+}
+
+@code {
+    private bool _ready;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Api.Changed += OnChanged;
+        await Api.InitializeAsync();
+        _ready = true;
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Api.Changed -= OnChanged;
+}

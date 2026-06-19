@@ -1,0 +1,11 @@
+.splash {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f26522;
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}

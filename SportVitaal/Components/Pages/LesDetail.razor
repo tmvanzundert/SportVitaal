@@ -1,0 +1,124 @@
+@page "/les/{LessonId:guid}"
+@inject SportVitaal.ViewModels.LessonDetailViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("rooster")' aria-label="Terug">←</button>
+        <div>
+            <h1>@Vm.Workout</h1>
+            <p class="sub">Les detail</p>
+        </div>
+    </header>
+
+    @if (Vm.Message is not null)
+    {
+        <div class="notice @(Vm.MessageIsError ? "notice-error" : "notice-ok")">@Vm.Message</div>
+    }
+
+    @if (Vm.SpotFreed)
+    {
+        <div class="notice notice-alert">🔔 Er is een plek vrijgekomen! Wees er snel bij.</div>
+    }
+    else if (Vm.OnWaitlist)
+    {
+        <div class="notice notice-wait">Je staat op de wachtlijst (@Vm.WaitlistCount wachtend).</div>
+    }
+
+    <section class="card detail">
+        <div class="detail-head">
+            <span class="logo">⚙</span>
+            <div>
+                <strong>@Vm.Workout</strong>
+                <div class="muted">@Vm.Subtitle</div>
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat"><span class="stat-l">TIJDSTIP</span><span class="stat-v">@Vm.Time</span></div>
+            <div class="stat"><span class="stat-l">DUUR</span><span class="stat-v">@Vm.Duration</span></div>
+            <div class="stat"><span class="stat-l">PLEKKEN</span><span class="stat-v">@Vm.Plekken</span></div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Vm.Description))
+        {
+            <p class="desc">@Vm.Description</p>
+        }
+    </section>
+
+    @if (Vm.AllowsSeatSelection)
+    {
+        <h3 class="section">Kies je fiets</h3>
+        <section class="card">
+            <div class="instructor-bar"><span class="dot"></span> Instructeur</div>
+            <div class="bikes">
+                @foreach (var bike in Vm.Bikes)
+                {
+                    <button class="bike @(bike.Mine ? "mine" : "") @(bike.Selected ? "sel" : "") @(bike.Occupied ? "occ" : "")"
+                            disabled="@(bike.Occupied || Vm.ReservedByMe)"
+                            @onclick="() => Vm.SelectSeatCommand.Execute(bike.Number)">
+                        @bike.Number
+                    </button>
+                }
+            </div>
+            <div class="legend">
+                <span><i class="lg-free"></i> Vrij</span>
+                <span><i class="lg-occ"></i> Bezet</span>
+                <span><i class="lg-sel"></i> Jouw keuze</span>
+            </div>
+        </section>
+    }
+
+    <h3 class="section">Aangemeld (@Vm.ParticipantCount)</h3>
+    <section class="card participants">
+        @if (Vm.Participants.Count == 0)
+        {
+            <p class="muted">Nog geen aanmeldingen.</p>
+        }
+        @foreach (var p in Vm.Participants)
+        {
+            <div class="participant">
+                <span class="pav" style="background:@p.Color">@p.Initials</span>
+                <span class="pname">@p.Name</span>
+                @if (p.IsMe)
+                {
+                    <span class="jij">JIJ</span>
+                }
+            </div>
+        }
+    </section>
+
+    @if (Vm.ReservedByMe)
+    {
+        <button class="cancel" disabled="@Vm.IsBusy" @onclick="() => Vm.CancelCommand.ExecuteAsync(null)">Afmelden</button>
+    }
+    else if (Vm.OnWaitlist)
+    {
+        @if (Vm.SpotFreed)
+        {
+            <button class="primary @(Vm.CanReserve ? "" : "disabled")" disabled="@(!Vm.CanReserve || Vm.IsBusy)"
+                    @onclick="() => Vm.ReserveCommand.ExecuteAsync(null)">@Vm.ReserveLabel</button>
+        }
+        <button class="cancel" disabled="@Vm.IsBusy" @onclick="() => Vm.LeaveWaitlistCommand.ExecuteAsync(null)">Verlaat wachtlijst</button>
+    }
+    else if (Vm.Full)
+    {
+        <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.JoinWaitlistCommand.ExecuteAsync(null)">Op wachtlijst — les is vol</button>
+    }
+    else
+    {
+        <button class="primary @(Vm.CanReserve ? "" : "disabled")" disabled="@(!Vm.CanReserve || Vm.IsBusy)"
+                @onclick="() => Vm.ReserveCommand.ExecuteAsync(null)">@Vm.ReserveLabel</button>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid LessonId { get; set; }
+
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(LessonId);
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

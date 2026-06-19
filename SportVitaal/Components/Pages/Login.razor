@@ -1,0 +1,45 @@
+@inject SportVitaal.ViewModels.LoginViewModel Vm
+@implements IDisposable
+
+<div class="screen">
+    <div class="brand">
+        <div class="logo">▲</div>
+        <h1>Sport Vitaal</h1>
+        <p class="tagline">Leden Portaal</p>
+    </div>
+
+    @if (Vm.Error is not null)
+    {
+        <div class="error">@Vm.Error</div>
+    }
+
+    <label class="label" for="email">E-mailadres</label>
+    <input id="email" class="input" type="email" placeholder="naam@@voorbeeld.nl"
+           @bind="Vm.Email" @bind:event="oninput"/>
+
+    <label class="label" for="password">Wachtwoord</label>
+    <div class="input password">
+        <input id="password" type="@(Vm.ShowPassword ? "text" : "password")" placeholder="••••••••"
+               @bind="Vm.Password" @bind:event="oninput"/>
+        <button type="button" class="eye" @onclick="() => Vm.TogglePasswordCommand.Execute(null)"
+                aria-label="Toon wachtwoord">👁</button>
+    </div>
+    <div class="forgot">Wachtwoord vergeten?</div>
+
+    <button class="primary" @onclick="() => Vm.LoginCommand.ExecuteAsync(null)" disabled="@Vm.IsBusy">
+        @(Vm.IsBusy ? "Bezig…" : "Inloggen")
+    </button>
+
+    <p class="footer">Nog geen account?
+        <span class="link" @onclick="() => Vm.OpenWebsiteCommand.ExecuteAsync(null)">Bezoek onze website</span>
+    </p>
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}

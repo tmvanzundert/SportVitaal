@@ -1,0 +1,129 @@
+@page "/"
+@inject SportVitaal.ViewModels.DashboardViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <div>
+            <p class="welcome">Welkom terug</p>
+            <h1 class="name">@Vm.Name</h1>
+        </div>
+        <div class="head-actions">
+            <button class="bell-btn" @onclick='() => Nav.NavigateTo("meldingen")' title="Meldingen">
+                🔔
+                @if (Vm.UnreadNotifications > 0)
+                {
+                    <span class="badge">@(Vm.UnreadNotifications > 9 ? "9+" : Vm.UnreadNotifications.ToString())</span>
+                }
+            </button>
+            <button class="avatar" @onclick='() => Nav.NavigateTo("profiel")' title="Profiel">
+                @if (Vm.PhotoDataUri is not null)
+                {
+                    <img class="avatar-img" src="@Vm.PhotoDataUri" alt="Profiel"/>
+                }
+                else
+                {
+                    @Vm.Initials
+                }
+            </button>
+        </div>
+    </header>
+
+    @if (Vm.WaitlistNotice is not null && Vm.WaitlistLessonId is not null)
+    {
+        <div class="notice clickable" @onclick='() => Nav.NavigateTo($"les/{Vm.WaitlistLessonId}")'>
+            <span class="bell">🔔</span>@Vm.WaitlistNotice
+        </div>
+    }
+
+    @if (Vm.ExpiryNotice is not null)
+    {
+        <div class="notice clickable" @onclick='() => Nav.NavigateTo("abonnement")'>
+            <span class="bell">🔔</span>@Vm.ExpiryNotice
+        </div>
+    }
+
+    <section class="card membership clickable" @onclick='() => Nav.NavigateTo("abonnement")'>
+        <div class="row">
+            <span class="muted">HUIDIG ABONNEMENT</span>
+            @if (Vm.Plan is not null)
+            {
+                <span class="badge @(Vm.Plan.IsActive ? "" : "badge-off")">@Vm.Plan.StatusBadge</span>
+            }
+        </div>
+
+        @if (Vm.Plan is null)
+        {
+            <h2>Geen abonnement</h2>
+            <p class="price">Kies een abonnement op onze website</p>
+        }
+        else
+        {
+            <h2>@Vm.Plan.Name</h2>
+            <p class="price">@Vm.Plan.PriceLine</p>
+
+            @if (Vm.Plan.ShowProgress)
+            {
+                <div class="row tiny">
+                    <span class="muted">@Vm.Plan.ExpiryLabel</span>
+                    <span class="strong">@Vm.Plan.ExpiryValue</span>
+                </div>
+                <div class="bar"><span style="width:@(Vm.Plan.PercentLeft)%"></span></div>
+            }
+            <p class="next">@Vm.Plan.NextLine</p>
+        }
+    </section>
+
+    <h3 class="section">Snelle acties</h3>
+    <div class="actions">
+        <div class="action clickable" @onclick='() => Nav.NavigateTo("rooster")'><span class="icon">📅</span>Lesrooster</div>
+        <div class="action clickable" @onclick='() => Nav.NavigateTo("inchecken")'><span class="icon">✅</span>Inchecken</div>
+        <div class="action clickable" @onclick='() => Nav.NavigateTo("historie")'><span class="icon">🕑</span>Historie</div>
+        @if (Vm.IsInstructor)
+        {
+            <div class="action"><span class="icon">📋</span>Aanmeldingen</div>
+        }
+    </div>
+
+    <h3 class="section">Aankomende lessen</h3>
+    @foreach (var lesson in Vm.Lessons)
+    {
+        <div class="card lesson clickable" @onclick="() => OnLessonClick(lesson)">
+            <span class="lesson-icon">🕑</span>
+            <div class="lesson-body">
+                <strong>@lesson.Workout</strong>
+                <span class="muted">@lesson.When · @lesson.Instructor</span>
+            </div>
+            @if (lesson.CanCheckIn)
+            {
+                <span class="checkin-pill">✅ Inchecken</span>
+            }
+            else
+            {
+                <span class="spots">@lesson.Spots<br/><span class="muted">plekken</span></span>
+            }
+        </div>
+    }
+    @if (Vm.Loaded && Vm.Lessons.Count == 0)
+    {
+        <p class="muted">Je hebt geen aankomende reserveringen.</p>
+    }
+</div>
+
+@code {
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadCommand.ExecuteAsync(null);
+
+    // An imminent lesson (within the check-in window) deep-links to its check-in screen; any other
+    // upcoming lesson opens its detail page.
+    private void OnLessonClick(DashboardViewModel.LessonRow lesson)
+        => Nav.NavigateTo(lesson.CanCheckIn ? $"inchecken/{lesson.LessonId}" : $"les/{lesson.LessonId}");
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Vm.PropertyChanged -= OnViewModelChanged;
+}
+

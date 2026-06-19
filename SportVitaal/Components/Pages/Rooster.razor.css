@@ -1,0 +1,255 @@
+.screen {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
+    background: #f2f3f5;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.3rem;
+}
+
+.back {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.head > div:nth-child(2) {
+    flex: 1;
+}
+
+.head h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.weeknav {
+    display: flex;
+    gap: .4rem;
+}
+
+.weeknav button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.chev {
+    color: #c4c4c8;
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.sub {
+    margin: .1rem 0 0;
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    text-transform: uppercase;
+}
+
+/* Day selector */
+.days {
+    display: flex;
+    gap: .55rem;
+    overflow-x: auto;
+    padding-bottom: .5rem;
+    margin-bottom: 1rem;
+    scrollbar-width: none;
+}
+
+.days::-webkit-scrollbar {
+    display: none;
+}
+
+.day {
+    flex: 0 0 auto;
+    width: 48px;
+    border: none;
+    border-radius: 14px;
+    background: #fff;
+    padding: .6rem 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+
+.day-abbr {
+    font-size: .62rem;
+    letter-spacing: .08em;
+    color: #8e8e93;
+    text-transform: uppercase;
+}
+
+.day-num {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.day-on {
+    background: #f26522;
+}
+
+.day-on .day-abbr,
+.day-on .day-num {
+    color: #fff;
+}
+
+/* Lesson cards */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    border-left: 4px solid #ccc;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+    margin-bottom: 1rem;
+}
+
+.lesson-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .8rem;
+}
+
+.lesson-top strong {
+    font-size: 1.05rem;
+}
+
+.time {
+    color: #8e8e93;
+    font-size: .82rem;
+    margin-top: .15rem;
+}
+
+.pill {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .4rem .9rem;
+}
+
+.pill-go {
+    background: #fdeee4;
+    color: #f26522;
+    cursor: pointer;
+}
+
+.pill-go:disabled {
+    opacity: .6;
+}
+
+.pill-full {
+    background: #fdeeee;
+    color: #e2483d;
+}
+
+.pill-done {
+    background: #e7f6ec;
+    color: #1e7e45;
+}
+
+.lesson-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: .9rem;
+}
+
+.instr {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: #6c6c70;
+    font-size: .85rem;
+}
+
+.ic {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f2f3f5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+}
+
+.occ {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex: 1;
+    max-width: 55%;
+}
+
+.bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: #ececed;
+    overflow: hidden;
+}
+
+.bar span {
+    display: block;
+    height: 100%;
+}
+
+.count {
+    color: #6c6c70;
+    font-size: .82rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.empty {
+    text-align: center;
+    color: #8e8e93;
+    margin-top: 2rem;
+}
+
+.notice {
+    border-radius: 12px;
+    padding: .8rem 1rem;
+    font-size: .9rem;
+    margin-bottom: 1rem;
+}
+
+.notice-ok {
+    background: #e7f6ec;
+    color: #1e7e45;
+}
+
+.notice-error {
+    background: #fde8e8;
+    color: #b42318;
+}
