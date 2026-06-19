@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="bunit" Version="1.40.0" />
         <PackageReference Include="coverlet.collector" Version="6.0.4" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
         <PackageReference Include="NUnit" Version="4.3.2" />
@@ -23,6 +24,7 @@
     <ItemGroup>
       <ProjectReference Include="..\SportVitaal.Domain\SportVitaal.Domain.csproj" />
       <ProjectReference Include="..\SportVitaal.Application\SportVitaal.Application.csproj" />
+      <ProjectReference Include="..\SportVitaal.BlazerWasm\SportVitaal.BlazerWasm.csproj" />
     </ItemGroup>
 
 </Project>
