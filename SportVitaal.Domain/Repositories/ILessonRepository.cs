@@ -5,8 +5,10 @@ namespace SportVitaal.Domain.Repositories
     public interface ILessonRepository
     {
         Task<Lesson?> GetByIdAsync(Guid id);
+        Task<IEnumerable<Lesson>> GetByIdsAsync(IEnumerable<Guid> ids);
         Task<IEnumerable<Lesson>> GetLessonsInRangeAsync(DateTime from, DateTime to);
         Task<IEnumerable<Lesson>> GetByWorkoutIdAsync(Guid workoutId);
+        Task<IEnumerable<Lesson>> GetForInstructorAsync(Guid instructorId, DateTime from, DateTime to);
         Task<IEnumerable<Lesson>> GetForOccupancyAsync(DateTime from, DateTime to);
         Task AddAsync(Lesson lesson);
         Task UpdateAsync(Lesson lesson);

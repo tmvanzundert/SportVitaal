@@ -85,8 +85,11 @@ namespace SportVitaal.Domain.Entities
                 if (seatNumber < 1 || seatNumber > Capacity)
                     throw new DomainException($"Seat number must be between 1 and {Capacity}.");
 
-                // Ensure seat is not already taken by an active reservation
-                if (_reservations.Any(r => r.Status == ReservationStatus.Reserved && r.SeatNumber == seatNumber))
+                // Ensure seat is not already taken. A seat counts as taken for any non-cancelled
+                // reservation (Reserved or Attended): an attended reservation still physically holds
+                // the seat, and its row still occupies the unique (LessonId, SeatNumber) slot. This
+                // matches how the API reports occupiedSeats to the client.
+                if (_reservations.Any(r => r.Status != ReservationStatus.Cancelled && r.SeatNumber == seatNumber))
                     throw new DomainException("Seat already taken.");
             }
 
@@ -95,22 +98,25 @@ namespace SportVitaal.Domain.Entities
             return reservation;
         }
 
+        /// <summary>
+        /// Marks the member's active reservation for this lesson as attended (check-in at the door).
+        /// </summary>
+        public Reservation CheckIn(Guid memberId)
+        {
+            var res = _reservations.FirstOrDefault(r => r.MemberId == memberId && r.Status == ReservationStatus.Reserved);
+            if (res == null) throw new DomainException("No active reservation to check in for this lesson.");
+            res.MarkAttended();
+            return res;
+        }
+
         public void CancelReservation(Guid reservationId)
         {
             var res = _reservations.FirstOrDefault(r => r.Id == reservationId);
             if (res == null) throw new DomainException("Reservation not found.");
             res.Cancel();
 
-            // promote first on waiting list if any
-            var next = _waitingList.FirstOrDefault();
-            if (next != null)
-            {
-                _waitingList.Remove(next);
-                var promoted = new Reservation(Id, next.MemberId, null);
-                _reservations.Add(promoted);
-                // Record a domain event so the application/infrastructure layers can notify the promoted member
-                _domainEvents.Add(new ReservationPromotedEvent(promoted.LessonId, promoted.MemberId, promoted.Id, DateTime.UtcNow));
-            }
+            // No automatic promotion: when a spot frees up, all waiting members are notified and may
+            // claim it on a first-come basis (handled in the application/UI layer).
         }
 
         /// <summary>

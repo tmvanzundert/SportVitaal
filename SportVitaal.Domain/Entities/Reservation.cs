@@ -29,6 +29,10 @@ namespace SportVitaal.Domain.Entities
         public void Cancel()
         {
             Status = ReservationStatus.Cancelled;
+            // Free the seat so it can be re-booked. The unique (LessonId, SeatNumber) index
+            // counts a non-null seat even on a cancelled row, so leaving it set would block
+            // anyone else from taking that seat again. Multiple NULLs are allowed by the index.
+            SeatNumber = null;
         }
 
         public void MarkAttended()

@@ -20,6 +20,10 @@ namespace SportVitaal.Domain.Entities
         public bool IsActive { get; private set; }
         public Membership? Membership { get; private set; }
 
+        // Links an instructor account to its Instructor identity (the entity lessons are scheduled
+        // against). Null for members and employees.
+        public Guid? InstructorId { get; private set; }
+
         public UserAccount(string email, Role role = Role.Member)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -42,6 +46,14 @@ namespace SportVitaal.Domain.Entities
         public void SetPasswordHash(string passwordHash)
         {
             PasswordHash = passwordHash;
+        }
+
+        /// <summary>Associates this account with an <see cref="Instructor"/> identity.</summary>
+        public void LinkInstructor(Guid instructorId)
+        {
+            if (Role != Role.Instructor)
+                throw new DomainException("Only instructor accounts can be linked to an instructor.");
+            InstructorId = instructorId;
         }
 
         public void ClearPassword()

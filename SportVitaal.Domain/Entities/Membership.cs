@@ -37,10 +37,12 @@ namespace SportVitaal.Domain.Entities
 
         public void CancelIfMonthly()
         {
-            // Business rule: monthly subscriptions can be cancelled; yearly cannot
+            // Business rule: monthly subscriptions can be cancelled; yearly cannot.
             if (Type == MembershipType.TwiceWeeklyMonthly || Type == MembershipType.UnlimitedMonthly)
             {
-                EndDate = DateTime.UtcNow; // effective immediately
+                // Cancellation takes effect at the end of the current paid period: keep an existing
+                // future end date, only stamp one when the membership was open-ended.
+                EndDate ??= DateTime.UtcNow;
                 return;
             }
 
