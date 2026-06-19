@@ -177,47 +177,10 @@ namespace SportVitaal.Application.Services
             await _lessonRepository.UpdateAsync(lesson);
             await _unitOfWork.SaveChangesAsync(ct);
 
+            // A spot just freed up: everyone on this lesson's waiting list is notified and may claim it
+            // on a first-come basis via the app (handled in the cancellation event below).
             var cancelledEvent = new ReservationCancelledEvent(reservation.Id, reservation.LessonId, reservation.MemberId, cancelledBy);
             await _dispatcher.DispatchAsync(cancelledEvent);
-
-            // Dispatch any domain events produced by the lesson (e.g. ReservationPromotedEvent)
-            foreach (var ev in lesson.DomainEvents)
-            {
-                await _dispatcher.DispatchAsync(ev);
-            }
-            lesson.ClearDomainEvents();
-        }
-
-        public async Task PromoteFromWaitingListAsync(Guid lessonId, CancellationToken ct = default)
-        {
-            var lesson = await _lessonRepository.GetByIdAsync(lessonId);
-            if (lesson == null) throw new DomainException("Lesson not found.");
-
-            var waiting = await _waitingListRepository.GetForLessonAsync(lessonId, ct);
-            var next = waiting.OrderBy(w => w.CreatedAt).FirstOrDefault();
-            if (next == null) return; // nothing to promote
-
-            var reservedCount = lesson.Reservations.Count(r => r.Status == ReservationStatus.Reserved);
-            if (reservedCount >= lesson.Capacity) return;
-
-            var reservation = lesson.Reserve(next.MemberId, null);
-            if (reservation == null) return; // unexpected: could not create reservation
-
-            // Add explicitly so the client-generated key is tracked as Added (insert), not Modified.
-            await _reservationRepository.AddAsync(reservation, ct);
-
-            await _waitingListRepository.RemoveAsync(next, ct);
-
-            await _unitOfWork.SaveChangesAsync(ct);
-
-            var createdEvent = new ReservationCreatedEvent(reservation.Id, reservation.LessonId, reservation.MemberId);
-            await _dispatcher.DispatchAsync(createdEvent);
-
-            foreach (var ev in lesson.DomainEvents)
-            {
-                await _dispatcher.DispatchAsync(ev);
-            }
-            lesson.ClearDomainEvents();
         }
     }
 }

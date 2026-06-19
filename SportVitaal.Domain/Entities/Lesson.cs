@@ -1,5 +1,4 @@
 using SportVitaal.Domain.DomainExceptions;
-using SportVitaal.Domain.DomainEvents;
 
 namespace SportVitaal.Domain.Entities
 {
@@ -16,10 +15,6 @@ namespace SportVitaal.Domain.Entities
 
         private readonly List<Reservation> _reservations = new();
         public IReadOnlyCollection<Reservation> Reservations => _reservations.AsReadOnly();
-
-        // Domain events produced by this aggregate (collected for dispatch by application layer)
-        private readonly List<IDomainEvent> _domainEvents = new();
-        public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
         private readonly List<WaitingListEntry> _waitingList = new();
         public IReadOnlyCollection<WaitingListEntry> WaitingList => _waitingList.AsReadOnly();
@@ -114,15 +109,6 @@ namespace SportVitaal.Domain.Entities
 
             // No automatic promotion: when a spot frees up, all waiting members are notified and may
             // claim it on a first-come basis (handled in the application/UI layer).
-        }
-
-        /// <summary>
-        /// Clears collected domain events. Should be called by the application layer
-        /// after events have been dispatched.
-        /// </summary>
-        public void ClearDomainEvents()
-        {
-            _domainEvents.Clear();
         }
     }
 }

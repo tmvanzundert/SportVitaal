@@ -24,11 +24,6 @@ namespace SportVitaal.Domain.Services
         /// the check-in window around the lesson start. Throws domain exceptions on rule violations.
         /// </summary>
         Task CheckInAsync(Guid userId, Guid lessonId, CancellationToken ct = default);
-
-        /// <summary>
-        /// Promote next waiting-list entry for the provided lesson (if any) and create reservation.
-        /// </summary>
-        Task PromoteFromWaitingListAsync(Guid lessonId, CancellationToken ct = default);
     }
 }
 

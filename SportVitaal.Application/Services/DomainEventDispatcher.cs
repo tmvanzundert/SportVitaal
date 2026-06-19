@@ -40,13 +40,6 @@ namespace SportVitaal.Application.Services
 
             switch (domainEvent)
             {
-                // A previously waitlisted member was promoted into a freed spot.
-                case ReservationPromotedEvent promoted:
-                    await NotifyAsync(promoted.MemberId, NotificationType.WaitlistSpotAvailable,
-                        "Je hebt een plek in de les",
-                        "Er is een plek vrijgekomen en voor jou gereserveerd. Tot in de les!");
-                    break;
-
                 // Reservation confirmation for the member.
                 case ReservationCreatedEvent created:
                     await NotifyAsync(created.UserId, NotificationType.ReservationConfirmed,

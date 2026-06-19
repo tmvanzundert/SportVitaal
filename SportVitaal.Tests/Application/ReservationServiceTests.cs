@@ -263,34 +263,6 @@ public class ReservationServiceTests
         Assert.ThrowsAsync<DomainException>(() => _service.CheckInAsync(member.Id, lesson.Id));
     }
 
-    // ---- PromoteFromWaitingListAsync ----
-
-    [Test]
-    public async Task PromoteFromWaitingListAsync_WhenSpotFree_ReservesNextWaiter()
-    {
-        var taker = AddMember();
-        var waiter = AddMember();
-        var lesson = AddLesson(GroupRoom(capacity: 1), DateTime.UtcNow.AddHours(3));
-
-        await _service.ReserveAsync(taker.Id, lesson.Id);   // fills the spot
-        await _service.ReserveAsync(waiter.Id, lesson.Id);  // goes to waiting list
-        var takerRes = _store.Reservations.Single(r => r.MemberId == taker.Id);
-        await _service.CancelReservationAsync(takerRes.Id, taker.Id); // frees a spot
-
-        await _service.PromoteFromWaitingListAsync(lesson.Id);
-
-        Assert.That(_store.Reservations.Any(r => r.MemberId == waiter.Id && r.Status == ReservationStatus.Reserved), Is.True);
-        Assert.That(_store.WaitingList, Is.Empty);
-    }
-
-    [Test]
-    public async Task PromoteFromWaitingListAsync_EmptyWaitingList_DoesNothing()
-    {
-        var lesson = AddLesson(GroupRoom(capacity: 1));
-        await _service.PromoteFromWaitingListAsync(lesson.Id);
-        Assert.That(_store.Reservations, Is.Empty);
-    }
-
     // ---- LeaveWaitlistAsync ----
 
     [Test]
