@@ -27,6 +27,17 @@ namespace SportVitaal.Infrastructure.Repositories
             return await _db.Users.FindAsync(id);
         }
 
+        public async Task<UserAccount?> GetByInstructorIdAsync(Guid instructorId)
+        {
+            return await _db.Users.FirstOrDefaultAsync(u => u.InstructorId == instructorId);
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var entity = await _db.Users.FindAsync(id);
+            if (entity != null) _db.Users.Remove(entity);
+        }
+
         public async Task<IEnumerable<UserAccount>> GetByRoleAsync(SportVitaal.Domain.Enums.Role role)
         {
             return await _db.Users.Where(u => u.Role == role).ToListAsync();

@@ -16,6 +16,11 @@
         <h2 class="h5">@(_editId is null ? "Nieuwe instructeur" : "Instructeur bewerken")</h2>
         <div class="row g-2">
             <div class="col-md-6"><input class="form-control" placeholder="Naam" @bind="_name"/></div>
+            @if (_editId is null)
+            {
+                <div class="col-md-6"><input class="form-control" type="email" placeholder="E-mailadres" @bind="_email"/></div>
+                <div class="col-md-6"><input class="form-control" type="password" placeholder="Wachtwoord" @bind="_password"/></div>
+            }
             <div class="col-md-6 d-flex gap-2">
                 <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_busy">@(_editId is null ? "Toevoegen" : "Opslaan")</button>
                 @if (_editId is not null)
@@ -24,7 +29,11 @@
                 }
             </div>
         </div>
-        <p class="text-muted small mt-2 mb-0">Een foto kun je per instructeur uploaden in de lijst hieronder.</p>
+        <p class="text-muted small mt-2 mb-0">
+            @(_editId is null
+                ? "De instructeur krijgt een eigen inlogaccount met de rol instructeur. Een foto kun je na het toevoegen uploaden in de lijst hieronder."
+                : "Een foto kun je per instructeur uploaden in de lijst hieronder.")
+        </p>
     </div>
 </div>
 
@@ -75,6 +84,8 @@ else
 
     private Guid? _editId;
     private string _name = string.Empty;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -96,19 +107,35 @@ else
     {
         _editId = null;
         _name = string.Empty;
+        _email = string.Empty;
+        _password = string.Empty;
     }
 
     private async Task SaveAsync()
     {
         if (string.IsNullOrWhiteSpace(_name)) { _error = "Naam is verplicht."; return; }
 
+        if (_editId is null)
+        {
+            if (string.IsNullOrWhiteSpace(_email)) { _error = "E-mailadres is verplicht."; return; }
+            if (string.IsNullOrWhiteSpace(_password)) { _error = "Wachtwoord is verplicht."; return; }
+        }
+
         _busy = true;
         try
         {
-            var ok = _editId is null
-                ? await Api.CreateInstructorAsync(_name)
-                : await Api.UpdateInstructorAsync(_editId.Value, _name);
-            if (!ok) { _error = "Opslaan mislukt."; return; }
+            if (_editId is null)
+            {
+                var (ok, error) = await Api.CreateInstructorAsync(_name, _email, _password);
+                if (!ok) { _error = string.IsNullOrWhiteSpace(error) ? "Opslaan mislukt." : error; return; }
+            }
+            else if (!await Api.UpdateInstructorAsync(_editId.Value, _name))
+            {
+                _error = "Opslaan mislukt.";
+                return;
+            }
+
+            _error = null;
             CancelEdit();
             await LoadAsync();
         }

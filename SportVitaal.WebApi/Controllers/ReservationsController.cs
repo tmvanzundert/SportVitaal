@@ -347,9 +347,9 @@ namespace SportVitaal.WebApi.Controllers
                 if (dto.Latitude is not { } lat || dto.Longitude is not { } lng)
                     return BadRequest("Locatie ontbreekt. Sta locatietoegang toe en probeer opnieuw.");
 
-                var clubLat = _config.GetValue("ClubLocation:Latitude", 52.3676);
-                var clubLng = _config.GetValue("ClubLocation:Longitude", 4.9041);
-                var radius = _config.GetValue("ClubLocation:RadiusMeters", 200.0);
+                var clubLat = _config.GetValue("ClubLocation:Latitude", 51.5839905010075);
+                var clubLng = _config.GetValue("ClubLocation:Longitude", 4.798838313338523);
+                var radius = _config.GetValue("ClubLocation:RadiusMeters", 500.0);
 
                 var meters = DistanceInMeters(clubLat, clubLng, lat, lng);
                 if (meters > radius)

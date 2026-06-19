@@ -110,8 +110,19 @@ namespace SportVitaal.BlazerWasm.Services
 
         // ---- Admin: instructors ----
 
-        public Task<bool> CreateInstructorAsync(string name, CancellationToken ct = default)
-            => SendAuthAsync(HttpMethod.Post, "api/instructors", new { name }, ct);
+        // Creating an instructor provisions a full login account with the Instructor role, so an
+        // e-mail and password are required alongside the name.
+        public async Task<(bool ok, string? error)> CreateInstructorAsync(string name, string email, string password, CancellationToken ct = default)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/instructors")
+            {
+                Content = JsonContent.Create(new { name, email, password }, options: JsonOptions)
+            };
+            Authorize(request);
+            var resp = await _http.SendAsync(request, ct);
+            if (resp.IsSuccessStatusCode) return (true, null);
+            return (false, await resp.Content.ReadAsStringAsync(ct));
+        }
 
         public Task<bool> UpdateInstructorAsync(Guid id, string name, CancellationToken ct = default)
             => SendAuthAsync(HttpMethod.Put, $"api/instructors/{id}", new { name }, ct);

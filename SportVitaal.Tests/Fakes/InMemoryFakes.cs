@@ -54,12 +54,21 @@ public sealed class FakeUserRepository : IUserRepository
         => Task.FromResult(_store.Users.FirstOrDefault(u =>
             string.Equals(u.Email, email, StringComparison.OrdinalIgnoreCase)));
 
+    public Task<UserAccount?> GetByInstructorIdAsync(Guid instructorId)
+        => Task.FromResult(_store.Users.FirstOrDefault(u => u.InstructorId == instructorId));
+
     public Task<IEnumerable<UserAccount>> GetByRoleAsync(Role role)
         => Task.FromResult(_store.Users.Where(u => u.Role == role));
 
     public Task AddAsync(UserAccount user)
     {
         _store.Users.Add(user);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(Guid id)
+    {
+        _store.Users.RemoveAll(u => u.Id == id);
         return Task.CompletedTask;
     }
 

@@ -6,9 +6,11 @@ namespace SportVitaal.Domain.Repositories
     {
         Task<UserAccount?> GetByIdAsync(Guid id);
         Task<UserAccount?> GetByEmailAsync(string email);
+        Task<UserAccount?> GetByInstructorIdAsync(Guid instructorId);
         Task<IEnumerable<UserAccount>> GetByRoleAsync(Enums.Role role);
         Task AddAsync(UserAccount user);
         Task UpdateAsync(UserAccount user);
+        Task DeleteAsync(Guid id);
         /// <summary>
         /// Start a membership for the given user.
         /// </summary>
