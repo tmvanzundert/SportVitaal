@@ -10,13 +10,19 @@ namespace SportVitaal.WebApi.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
+        private static readonly HashSet<string> AllowedPhotoExtensions =
+            new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp" };
+        private const long MaxPhotoBytes = 5 * 1024 * 1024; // 5 MB
+
         private readonly IUserRepository _userRepo;
         private readonly SportVitaal.Domain.Repositories.IUnitOfWork _uow;
+        private readonly IWebHostEnvironment _env;
 
-        public UsersController(IUserRepository userRepo, SportVitaal.Domain.Repositories.IUnitOfWork uow)
+        public UsersController(IUserRepository userRepo, SportVitaal.Domain.Repositories.IUnitOfWork uow, IWebHostEnvironment env)
         {
             _userRepo = userRepo;
             _uow = uow;
+            _env = env;
         }
 
         // Employees can see all members and their membership status.
@@ -51,7 +57,22 @@ namespace SportVitaal.WebApi.Controllers
             if (string.IsNullOrWhiteSpace(id)) return Unauthorized();
             var user = await _userRepo.GetByIdAsync(Guid.Parse(id));
             if (user == null) return NotFound();
-            return Ok(new { user.Id, user.Email, user.UserName, user.FullName, user.PhotoUrl, Role = user.Role.ToString() });
+            return Ok(new
+            {
+                user.Id,
+                user.Email,
+                user.UserName,
+                user.FullName,
+                user.PhotoUrl,
+                Role = user.Role.ToString(),
+                Membership = user.Membership == null ? null : new
+                {
+                    Type = user.Membership.Type.ToString(),
+                    user.Membership.StartDate,
+                    user.Membership.EndDate,
+                    user.Membership.IsActive
+                }
+            });
         }
 
         [HttpPut("me")]
@@ -67,6 +88,45 @@ namespace SportVitaal.WebApi.Controllers
             await _userRepo.UpdateAsync(user);
             await _uow.SaveChangesAsync();
             return NoContent();
+        }
+
+        // Uploads a new profile photo for the signed-in member and stores its web-relative URL.
+        [HttpPost("me/photo")]
+        [Authorize]
+        [RequestSizeLimit(MaxPhotoBytes)]
+        public async Task<IActionResult> UploadPhoto(IFormFile file)
+        {
+            var id = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(id)) return Unauthorized();
+            var user = await _userRepo.GetByIdAsync(Guid.Parse(id));
+            if (user == null) return NotFound();
+
+            if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
+            if (file.Length > MaxPhotoBytes) return BadRequest("File exceeds the 5 MB limit.");
+
+            var ext = Path.GetExtension(file.FileName);
+            if (!AllowedPhotoExtensions.Contains(ext))
+                return BadRequest("Unsupported image type. Allowed: jpg, jpeg, png, webp.");
+
+            // Never trust the client-supplied filename; generate a safe one.
+            var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var relativeDir = Path.Combine("uploads", "members");
+            var targetDir = Path.Combine(webRoot, relativeDir);
+            Directory.CreateDirectory(targetDir);
+
+            var fileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
+            var fullPath = Path.Combine(targetDir, fileName);
+            await using (var stream = System.IO.File.Create(fullPath))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var photoUrl = "/" + Path.Combine(relativeDir, fileName).Replace(Path.DirectorySeparatorChar, '/');
+            user.UpdateProfile(null, null, photoUrl); // only sets the photo, keeps name fields
+            await _userRepo.UpdateAsync(user);
+            await _uow.SaveChangesAsync();
+
+            return Ok(new { photoUrl });
         }
 
         [HttpPost("change-password")]

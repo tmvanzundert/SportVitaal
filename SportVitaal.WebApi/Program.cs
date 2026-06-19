@@ -12,6 +12,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
+// CORS for the standalone Blazor WebAssembly client, which calls this API cross-origin.
+// Origins are configurable; defaults cover the WASM dev server (http + https).
+const string WasmCorsPolicy = "WasmClient";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:5100", "https://localhost:7104" };
+builder.Services.AddCors(options =>
+    options.AddPolicy(WasmCorsPolicy, policy =>
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()));
+
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured. Set it in appsettings.Development.json (dev) or user-secrets/environment variables (production).");
@@ -50,8 +61,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
-    // Seed essential data (workouts, locations)
-    SeedData.EnsureSeedDataAsync(db).GetAwaiter().GetResult();
+    // Seed essential data (workouts, locations). In development also seed an always-open
+    // test lesson so check-in can be exercised at any time.
+    SeedData.EnsureSeedDataAsync(db, includeDevTestLesson: app.Environment.IsDevelopment())
+        .GetAwaiter().GetResult();
 }
 
 // Configure the HTTP request pipeline.
@@ -64,6 +77,8 @@ app.UseHttpsRedirection();
 
 // Serve uploaded files.
 app.UseStaticFiles();
+
+app.UseCors(WasmCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
