@@ -20,6 +20,11 @@ namespace SportVitaal.Infrastructure.Repositories
             return await _db.Set<WaitingListEntry>().Where(w => w.LessonId == lessonId).ToListAsync(ct);
         }
 
+        public async Task<IEnumerable<WaitingListEntry>> GetForUserAsync(Guid userId, CancellationToken ct = default)
+        {
+            return await _db.Set<WaitingListEntry>().Where(w => w.MemberId == userId).ToListAsync(ct);
+        }
+
         public Task RemoveAsync(WaitingListEntry entry, CancellationToken ct = default)
         {
             _db.Set<WaitingListEntry>().Remove(entry);

@@ -13,6 +13,7 @@ namespace SportVitaal.Infrastructure.Data
         public DbSet<Workout> Workouts { get; set; } = null!;
         public DbSet<Location> Locations { get; set; } = null!;
         public DbSet<Instructor> Instructors { get; set; } = null!;
+        public DbSet<Notification> Notifications { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -53,6 +54,11 @@ namespace SportVitaal.Infrastructure.Data
             modelBuilder.Entity<Workout>().HasKey(w => w.Id);
             modelBuilder.Entity<Location>().HasKey(l => l.Id);
             modelBuilder.Entity<Instructor>().HasKey(i => i.Id);
+
+            // In-app notification feed: query by user, newest first.
+            modelBuilder.Entity<Notification>().HasKey(n => n.Id);
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.CreatedAt });
         }
     }
 }

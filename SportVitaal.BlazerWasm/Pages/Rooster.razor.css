@@ -1,0 +1,150 @@
+.rooster-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.rooster-weeklabel {
+    margin-left: auto;
+    font-weight: 600;
+    color: #495057;
+}
+
+.rooster-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.75rem;
+    transition: opacity 0.15s;
+}
+
+.rooster-grid.is-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.rooster-day {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e3e6ea;
+    border-radius: 0.5rem;
+    background: #fff;
+    overflow: hidden;
+}
+
+.rooster-day.is-today {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 1px #0d6efd;
+}
+
+.rooster-day-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 0.25rem;
+    background: #f5f7fa;
+    border-bottom: 1px solid #e3e6ea;
+    line-height: 1.2;
+}
+
+.rooster-day.is-today .rooster-day-head {
+    background: #e7f1ff;
+}
+
+.rooster-day-name {
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.rooster-day-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.rooster-day-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.5rem;
+    flex: 1;
+}
+
+.rooster-empty {
+    text-align: center;
+    color: #adb5bd;
+    margin: 0.5rem 0;
+}
+
+.rooster-lesson {
+    border-left: 4px solid #0d6efd;
+    background: #f8f9fa;
+    border-radius: 0.3rem;
+    padding: 0.4rem 0.5rem;
+}
+
+.rooster-lesson-time {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.rooster-lesson-name {
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.rooster-lesson-meta {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.rooster-instructor {
+    display: flex;
+    align-items: center;
+    margin-top: 0.15rem;
+}
+
+/* Tablet: two rows of columns */
+@media (max-width: 992px) {
+    .rooster-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .rooster-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .rooster-weeklabel {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .rooster-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rooster-day {
+        flex-direction: row;
+    }
+
+    .rooster-day-head {
+        flex: 0 0 4.5rem;
+        justify-content: center;
+        border-bottom: none;
+        border-right: 1px solid #e3e6ea;
+    }
+
+    .rooster-day-body {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .rooster-lesson {
+        flex: 1 1 8rem;
+    }
+}

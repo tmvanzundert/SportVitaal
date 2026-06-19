@@ -1,0 +1,168 @@
+@page "/aanmelden"
+@inject SportVitaalApiClient Api
+
+<PageTitle>Aanmelden</PageTitle>
+
+<h1>Aanmelden</h1>
+
+@if (_done)
+{
+    <div class="alert alert-success">
+        <h4 class="alert-heading">Welkom bij SportVitaal!</h4>
+        <p>
+            Je aanmelding is gelukt en de betaling van &euro;@_confirmedAmount is verwerkt.
+            Je abonnement gaat in op @_confirmedStart.ToString("d MMMM yyyy").
+        </p>
+        <p class="mb-0">
+            Je ontvangt een bevestiging per e-mail. Je kunt je abonnement vanaf nu beheren in de SportVitaal-app.
+        </p>
+    </div>
+}
+else
+{
+    <p>Word lid in een paar stappen. Kies je abonnement, je startdatum en maak een account aan.</p>
+
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+
+    <EditForm Model="this" OnValidSubmit="SubmitAsync">
+        <DataAnnotationsValidator/>
+
+        <div class="mb-3">
+            <label class="form-label">Abonnement</label>
+            <select class="form-select" @bind="_selectedPlan">
+                @foreach (var plan in Plans)
+                {
+                    <option value="@plan.Type">@plan.Label</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="startdatum">Startdatum</label>
+            <input id="startdatum" type="date" class="form-control" min="@_today.ToString("yyyy-MM-dd")"
+                   value="@_startDate.ToString("yyyy-MM-dd")"
+                   @onchange="OnStartDateChanged"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="email">E-mailadres</label>
+            <InputText id="email" class="form-control" @bind-Value="_email"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="password">Wachtwoord</label>
+            <InputText id="password" type="password" class="form-control" @bind-Value="_password"/>
+        </div>
+
+        <button type="submit" class="btn btn-success" disabled="@_submitting">
+            @(_submitting ? "Bezig…" : "Aanmelden en betalen")
+        </button>
+    </EditForm>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "plan")]
+    public string? PlanQuery { get; set; }
+
+    private record Plan(MembershipType Type, string Label);
+
+    private static readonly Plan[] Plans =
+    {
+        new(MembershipType.TwiceWeeklyMonthly, "Max 2x per week – per maand (€29)"),
+        new(MembershipType.TwiceWeeklyYearly, "Max 2x per week – per jaar (€299)"),
+        new(MembershipType.UnlimitedMonthly, "Onbeperkt sporten – per maand (€55)"),
+        new(MembershipType.UnlimitedYearly, "Onbeperkt sporten – per jaar (€549)"),
+    };
+
+    private readonly DateTime _today = DateTime.Today;
+
+    private MembershipType _selectedPlan = MembershipType.UnlimitedMonthly;
+    private DateTime _startDate = DateTime.Today;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+
+    private bool _submitting;
+    private bool _done;
+    private string? _error;
+    private decimal _confirmedAmount;
+    private DateTime _confirmedStart;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrWhiteSpace(PlanQuery) && Enum.TryParse<MembershipType>(PlanQuery, out var plan)
+            && plan != MembershipType.None)
+        {
+            _selectedPlan = plan;
+        }
+    }
+
+    private void OnStartDateChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var d)) _startDate = d.Date;
+    }
+
+    private async Task SubmitAsync()
+    {
+        _error = null;
+
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Vul een e-mailadres en wachtwoord in.";
+            return;
+        }
+        if (_startDate < _today)
+        {
+            _error = "De startdatum kan niet in het verleden liggen.";
+            return;
+        }
+
+        _submitting = true;
+        try
+        {
+            var (regOk, regErr) = await Api.RegisterAsync(_email, _password);
+            if (!regOk)
+            {
+                _error = regErr is not null && regErr.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+                    ? "Er bestaat al een account met dit e-mailadres."
+                    : "Registratie mislukt. Controleer je gegevens en probeer het opnieuw.";
+                return;
+            }
+
+            var (loginOk, _) = await Api.LoginAsync(_email, _password);
+            if (!loginOk)
+            {
+                _error = "Inloggen na registratie mislukt.";
+                return;
+            }
+
+            var purchase = await Api.PurchaseAsync(_selectedPlan, _startDate);
+            if (purchase is null)
+            {
+                _error = "De betaling kon niet worden gestart.";
+                return;
+            }
+
+            var paid = await Api.CompleteSimulatedPaymentAsync(purchase.ClientSecret);
+            if (!paid)
+            {
+                _error = "De betaling is niet verwerkt.";
+                return;
+            }
+
+            _confirmedAmount = purchase.Amount;
+            _confirmedStart = purchase.StartDate;
+            _done = true;
+        }
+        catch
+        {
+            _error = "Er ging iets mis tijdens het aanmelden. Probeer het later opnieuw.";
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}

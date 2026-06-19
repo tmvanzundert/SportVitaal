@@ -25,6 +25,7 @@ namespace SportVitaal.Infrastructure.Extensions
             services.AddScoped<IReservationRepository, ReservationRepository>();
             services.AddScoped<IWaitingListRepository, WaitingListRepository>();
             services.AddScoped<IMembershipRepository, MembershipRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
 
             // Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();

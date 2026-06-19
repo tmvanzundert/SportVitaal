@@ -1,0 +1,121 @@
+@page "/medewerker/workouts"
+@layout AdminLayout
+@inject SportVitaalApiClient Api
+
+<PageTitle>Workouts beheren</PageTitle>
+
+<h1 class="h3">Workouts</h1>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5">@(_editId is null ? "Nieuwe workout" : "Workout bewerken")</h2>
+        <div class="row g-2">
+            <div class="col-md-4"><input class="form-control" placeholder="Naam" @bind="_name"/></div>
+            <div class="col-md-3"><input class="form-control" type="number" min="1" placeholder="Duur (min)" @bind="_duration"/></div>
+            <div class="col-md-3"><input class="form-control" placeholder="Omschrijving" @bind="_description"/></div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_busy">@(_editId is null ? "Toevoegen" : "Opslaan")</button>
+                @if (_editId is not null)
+                {
+                    <button class="btn btn-outline-secondary" @onclick="CancelEdit">Annuleren</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <p><em>Laden…</em></p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead><tr><th>Naam</th><th>Duur</th><th>Omschrijving</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var w in _workouts)
+            {
+                <tr>
+                    <td>@w.Name</td>
+                    <td>@w.DefaultDurationMinutes min</td>
+                    <td>@w.Description</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(w)">Bewerken</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAsync(w)">Verwijderen</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="text-muted small">Let op: bij het verwijderen van een workout worden ook alle bijbehorende lessen verwijderd.</p>
+}
+
+@code {
+    private List<WorkoutDto> _workouts = new();
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+
+    private Guid? _editId;
+    private string _name = string.Empty;
+    private int _duration = 60;
+    private string? _description;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try { _workouts = await Api.GetWorkoutsAsync(); _error = null; }
+        catch { _error = "Kon workouts niet laden."; }
+        finally { _loading = false; }
+    }
+
+    private void BeginEdit(WorkoutDto w)
+    {
+        _editId = w.Id;
+        _name = w.Name;
+        _duration = w.DefaultDurationMinutes;
+        _description = w.Description;
+    }
+
+    private void CancelEdit()
+    {
+        _editId = null;
+        _name = string.Empty;
+        _duration = 60;
+        _description = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_name) || _duration <= 0)
+        {
+            _error = "Naam en een positieve duur zijn verplicht.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var ok = _editId is null
+                ? await Api.CreateWorkoutAsync(_name, _duration, _description)
+                : await Api.UpdateWorkoutAsync(_editId.Value, _name, _duration, _description);
+            if (!ok) { _error = "Opslaan mislukt."; return; }
+            CancelEdit();
+            await LoadAsync();
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteAsync(WorkoutDto w)
+    {
+        if (!await Api.DeleteWorkoutAsync(w.Id)) { _error = "Verwijderen mislukt."; return; }
+        await LoadAsync();
+    }
+}

@@ -1,0 +1,151 @@
+@page "/rooster"
+@inject SportVitaalApiClient Api
+
+<PageTitle>Rooster</PageTitle>
+
+<h1>Rooster</h1>
+<p>Onze lessen voor de komende periode.</p>
+
+<div class="rooster-toolbar">
+    <button class="btn btn-outline-primary btn-sm" @onclick="PreviousWeek" disabled="@_loadingWeek">&laquo; Vorige week</button>
+    <button class="btn btn-outline-secondary btn-sm" @onclick="GoToToday" disabled="@_loadingWeek">Vandaag</button>
+    <button class="btn btn-outline-primary btn-sm" @onclick="NextWeek" disabled="@_loadingWeek">Volgende week &raquo;</button>
+    <span class="rooster-weeklabel">@_weekStart.ToString("d MMM") – @_weekStart.AddDays(6).ToString("d MMM yyyy")</span>
+</div>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+@if (_loading)
+{
+    <p><em>Laden…</em></p>
+}
+else
+{
+    <div class="rooster-grid @(_loadingWeek ? "is-loading" : "")">
+        @for (var i = 0; i < 7; i++)
+        {
+            var day = _weekStart.AddDays(i);
+            var dayLessons = _lessons.Where(l => l.StartAt.Date == day).OrderBy(l => l.StartAt).ToList();
+            <div class="rooster-day @(day == DateTime.Today ? "is-today" : "")">
+                <div class="rooster-day-head">
+                    <span class="rooster-day-name">@day.ToString("ddd")</span>
+                    <span class="rooster-day-date">@day.ToString("d MMM")</span>
+                </div>
+                <div class="rooster-day-body">
+                    @if (dayLessons.Count == 0)
+                    {
+                        <p class="rooster-empty">—</p>
+                    }
+                    else
+                    {
+                        @foreach (var lesson in dayLessons)
+                        {
+                            <div class="rooster-lesson" style="border-left-color:@WorkoutColor(lesson.WorkoutId)">
+                                <div class="rooster-lesson-time">
+                                    @lesson.StartAt.ToString("HH:mm")–@lesson.StartAt.AddMinutes(lesson.DurationMinutes).ToString("HH:mm")
+                                </div>
+                                <div class="rooster-lesson-name">@WorkoutName(lesson.WorkoutId)</div>
+                                <div class="rooster-lesson-meta">@(lesson.Location?.Name ?? "-")</div>
+                                <div class="rooster-lesson-meta rooster-instructor">@InstructorCell(lesson.InstructorId)</div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<LessonDto> _lessons = new();
+    private Dictionary<Guid, WorkoutDto> _workouts = new();
+    private Dictionary<Guid, InstructorDto> _instructors = new();
+    private DateTime _weekStart = StartOfWeek(DateTime.Today);
+    private bool _loading = true;
+    private bool _loadingWeek;
+    private string? _error;
+
+    // Deterministic palette so each workout keeps a consistent accent colour.
+    private static readonly string[] Palette =
+        { "#0d6efd", "#198754", "#fd7e14", "#6f42c1", "#d63384", "#20c997", "#dc3545", "#0dcaf0" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var workoutsTask = Api.GetWorkoutsAsync();
+            var instructorsTask = Api.GetInstructorsAsync();
+            await Task.WhenAll(workoutsTask, instructorsTask);
+            _workouts = workoutsTask.Result.ToDictionary(w => w.Id);
+            _instructors = instructorsTask.Result.ToDictionary(i => i.Id);
+
+            await LoadWeekAsync();
+        }
+        catch
+        {
+            _error = "Het rooster kon niet worden geladen. Probeer het later opnieuw.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadWeekAsync()
+    {
+        _error = null;
+        _loadingWeek = true;
+        try
+        {
+            _lessons = await Api.GetLessonsAsync(_weekStart, _weekStart.AddDays(7));
+        }
+        catch
+        {
+            _error = "Het rooster kon niet worden geladen. Probeer het later opnieuw.";
+        }
+        finally
+        {
+            _loadingWeek = false;
+        }
+    }
+
+    private Task PreviousWeek() { _weekStart = _weekStart.AddDays(-7); return LoadWeekAsync(); }
+    private Task NextWeek() { _weekStart = _weekStart.AddDays(7); return LoadWeekAsync(); }
+    private Task GoToToday() { _weekStart = StartOfWeek(DateTime.Today); return LoadWeekAsync(); }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return date.Date.AddDays(-diff);
+    }
+
+    private string WorkoutName(Guid workoutId)
+        => _workouts.TryGetValue(workoutId, out var w) ? w.Name : "Onbekend";
+
+    private string WorkoutColor(Guid workoutId)
+        => Palette[(uint)workoutId.GetHashCode() % Palette.Length];
+
+    private RenderFragment InstructorCell(Guid? instructorId) => builder =>
+    {
+        if (instructorId is { } id && _instructors.TryGetValue(id, out var instructor))
+        {
+            if (!string.IsNullOrWhiteSpace(instructor.PhotoUrl))
+            {
+                builder.OpenElement(0, "img");
+                builder.AddAttribute(1, "src", $"{Api.ApiBaseUrl}{instructor.PhotoUrl}");
+                builder.AddAttribute(2, "alt", instructor.Name);
+                builder.AddAttribute(3, "class", "rounded-circle me-1");
+                builder.AddAttribute(4, "style", "width:20px;height:20px;object-fit:cover;");
+                builder.CloseElement();
+            }
+            builder.AddContent(5, instructor.Name);
+        }
+        else
+        {
+            builder.AddContent(6, "nnb");
+        }
+    };
+}

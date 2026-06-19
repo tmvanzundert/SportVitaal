@@ -1,0 +1,74 @@
+@page "/medewerker/bezetting"
+@layout AdminLayout
+@inject SportVitaalApiClient Api
+
+<PageTitle>Bezetting</PageTitle>
+
+<h1 class="h3">Bezetting</h1>
+<p>Bezetting van historische en komende lessen.</p>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+@if (_loading)
+{
+    <p><em>Laden…</em></p>
+}
+else if (_rows.Count == 0)
+{
+    <p>Geen lessen in deze periode.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Datum &amp; tijd</th><th>Workout</th><th>Locatie</th><th>Bezetting</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var r in _rows.OrderByDescending(x => x.StartAt))
+            {
+                <tr>
+                    <td>@r.StartAt.ToString("ddd d MMM yyyy HH:mm")</td>
+                    <td>@WorkoutName(r.WorkoutId)</td>
+                    <td>@(r.LocationName ?? "-")</td>
+                    <td>
+                        @r.Reserved / @r.Capacity
+                        @if (r.Capacity > 0)
+                        {
+                            var pct = (int)Math.Round(100.0 * r.Reserved / r.Capacity);
+                            <div class="progress" style="height:6px;max-width:160px;">
+                                <div class="progress-bar @(pct >= 100 ? "bg-danger" : "")" style="width:@(Math.Min(pct,100))%"></div>
+                            </div>
+                        }
+                    </td>
+                    <td><span class="badge @(r.IsPast ? "bg-secondary" : "bg-success")">@(r.IsPast ? "verleden" : "komend")</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<OccupancyDto> _rows = new();
+    private Dictionary<Guid, string> _workoutNames = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var occTask = Api.GetOccupancyAsync();
+            var workoutsTask = Api.GetWorkoutsAsync();
+            await Task.WhenAll(occTask, workoutsTask);
+            _rows = occTask.Result;
+            _workoutNames = workoutsTask.Result.ToDictionary(w => w.Id, w => w.Name);
+        }
+        catch { _error = "Kon de bezetting niet laden."; }
+        finally { _loading = false; }
+    }
+
+    private string WorkoutName(Guid id) => _workoutNames.TryGetValue(id, out var n) ? n : "Onbekend";
+}

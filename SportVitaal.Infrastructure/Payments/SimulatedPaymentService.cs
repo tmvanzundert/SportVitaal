@@ -86,6 +86,22 @@ namespace SportVitaal.Infrastructure.Payments
                         _logger.LogInformation("Simulated payment succeeded and membership activated for member {MemberId}", info.memberId);
                     }
                 }
+                else if (meta.TryGetValue("action", out var action) && action == "upgrade"
+                         && meta.TryGetValue("newType", out var newTypeRaw)
+                         && Enum.TryParse<SportVitaal.Domain.Enums.MembershipType>(newTypeRaw, true, out var newType))
+                {
+                    using var scope = _sp.CreateScope();
+                    var membershipService = scope.ServiceProvider.GetRequiredService<IMembershipService>();
+                    await membershipService.UpgradeMembershipAsync(info.memberId, newType, new Money(info.amount, info.currency), ct);
+                    _logger.LogInformation("Simulated payment succeeded and membership upgraded for member {MemberId}", info.memberId);
+                }
+                else if (meta.TryGetValue("action", out var act) && act == "renew")
+                {
+                    using var scope = _sp.CreateScope();
+                    var membershipService = scope.ServiceProvider.GetRequiredService<IMembershipService>();
+                    await membershipService.RenewMembershipAsync(info.memberId, ct);
+                    _logger.LogInformation("Simulated payment succeeded and membership renewed for member {MemberId}", info.memberId);
+                }
                 else
                 {
                     _logger.LogInformation("Simulated payment succeeded for member {MemberId} (no membership metadata)", info.memberId);

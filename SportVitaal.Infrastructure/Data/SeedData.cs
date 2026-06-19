@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SportVitaal.Application.Services;
 using SportVitaal.Domain.Entities;
 using SportVitaal.Domain.Enums;
@@ -6,13 +7,20 @@ namespace SportVitaal.Infrastructure.Data
 {
     public static class SeedData
     {
-        public static async Task EnsureSeedDataAsync(AppDbContext db)
+        // Name marker for the development-only test lesson (see EnsureDevTestLessonAsync).
+        private const string DevTestWorkoutName = "DEV Testles";
+
+        public static async Task EnsureSeedDataAsync(AppDbContext db, bool includeDevTestLesson = false)
         {
             await EnsureWorkoutsAndLocationsAsync(db);
             await EnsureInstructorsAsync(db);
             await EnsureEmployeesAsync(db);
+            await EnsureInstructorAccountsAsync(db);
             await EnsureMembersAsync(db);
             await EnsureScheduleAsync(db);
+
+            if (includeDevTestLesson)
+                await EnsureDevTestLessonAsync(db);
         }
 
         private static async Task EnsureWorkoutsAndLocationsAsync(AppDbContext db)
@@ -69,6 +77,47 @@ namespace SportVitaal.Infrastructure.Data
             await db.SaveChangesAsync();
         }
 
+        private static async Task EnsureInstructorAccountsAsync(AppDbContext db)
+        {
+            var instructors = db.Instructors.ToList();
+
+            // Login accounts for the seeded instructors so they can use the app. Each account is
+            // linked to its Instructor identity (matched by name) so the app can resolve the
+            // instructor's own lessons. Password: "Docent123!". Idempotent: creates any missing
+            // account and backfills the instructor link if it is not set yet.
+            var specs = new[]
+            {
+                ("marit@sportvitaal.nl", "Marit Jansen"),
+                ("bram@sportvitaal.nl", "Bram Hendriks"),
+                ("fatima@sportvitaal.nl", "Fatima El Amrani"),
+                ("kevin@sportvitaal.nl", "Kevin de Boer"),
+            };
+
+            var changed = false;
+            foreach (var (email, name) in specs)
+            {
+                var user = db.Users.FirstOrDefault(u => u.Email == email);
+                if (user is null)
+                {
+                    user = CreateUser(email, name, Role.Instructor, "Docent123!");
+                    await db.Users.AddAsync(user);
+                    changed = true;
+                }
+
+                if (user.Role == Role.Instructor && user.InstructorId is null)
+                {
+                    var instructor = instructors.FirstOrDefault(i => i.Name == name);
+                    if (instructor != null)
+                    {
+                        user.LinkInstructor(instructor.Id);
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) await db.SaveChangesAsync();
+        }
+
         private static async Task EnsureMembersAsync(AppDbContext db)
         {
             if (db.Users.Any(u => u.Role == Role.Member)) return;
@@ -76,23 +125,25 @@ namespace SportVitaal.Infrastructure.Data
             var today = DateTime.UtcNow.Date;
 
             // Ten members with a mix of subscription types and states. Password: "Member123!".
-            var specs = new (string Email, string FullName, MembershipType? Type, int StartMonthsAgo, bool Expired)[]
+            // UserName is the member-visible name shown on the lesson detail screen.
+            var specs = new (string Email, string FullName, string UserName, MembershipType? Type, int StartMonthsAgo, bool Expired)[]
             {
-                ("sanne.devries@example.com",   "Sanne de Vries",   MembershipType.UnlimitedYearly,     4,  false),
-                ("tom.bakker@example.com",      "Tom Bakker",       MembershipType.TwiceWeeklyMonthly,  2,  false),
-                ("lisa.smit@example.com",       "Lisa Smit",        MembershipType.UnlimitedMonthly,    1,  false),
-                ("daan.visser@example.com",     "Daan Visser",      MembershipType.TwiceWeeklyYearly,   6,  false),
-                ("eva.mulder@example.com",      "Eva Mulder",       MembershipType.UnlimitedYearly,     9,  false),
-                ("noah.meijer@example.com",     "Noah Meijer",      MembershipType.TwiceWeeklyMonthly,  3,  false),
-                ("julia.bos@example.com",       "Julia Bos",        MembershipType.UnlimitedMonthly,    5,  false),
-                ("lucas.vermeulen@example.com", "Lucas Vermeulen",  MembershipType.TwiceWeeklyYearly,   11, false),
-                ("emma.peeters@example.com",    "Emma Peeters",     MembershipType.TwiceWeeklyMonthly,  14, true),  // verlopen
-                ("sem.dijkstra@example.com",    "Sem Dijkstra",     null,                               0,  false), // geen abonnement
+                ("sanne.devries@example.com",   "Sanne de Vries",   "SanneDV",     MembershipType.UnlimitedYearly,     4,  false),
+                ("tom.bakker@example.com",      "Tom Bakker",       "TomB",        MembershipType.TwiceWeeklyMonthly,  2,  false),
+                ("lisa.smit@example.com",       "Lisa Smit",        "LisaS",       MembershipType.UnlimitedMonthly,    1,  false),
+                ("daan.visser@example.com",     "Daan Visser",      "DaanV",       MembershipType.TwiceWeeklyYearly,   6,  false),
+                ("eva.mulder@example.com",      "Eva Mulder",       "EvaM",        MembershipType.UnlimitedYearly,     9,  false),
+                ("noah.meijer@example.com",     "Noah Meijer",      "NoahM",       MembershipType.TwiceWeeklyMonthly,  3,  false),
+                ("julia.bos@example.com",       "Julia Bos",        "JuliaB",      MembershipType.UnlimitedMonthly,    5,  false),
+                ("lucas.vermeulen@example.com", "Lucas Vermeulen",  "LucasV",      MembershipType.TwiceWeeklyYearly,   11, false),
+                ("emma.peeters@example.com",    "Emma Peeters",     "EmmaP",       MembershipType.TwiceWeeklyMonthly,  14, true),  // verlopen
+                ("sem.dijkstra@example.com",    "Sem Dijkstra",     "SemD",        null,                               0,  false), // geen abonnement
             };
 
             foreach (var spec in specs)
             {
                 var user = CreateUser(spec.Email, spec.FullName, Role.Member, "Member123!");
+                user.UpdateProfile(spec.UserName, null, null);
 
                 if (spec.Type is { } type)
                 {
@@ -166,11 +217,17 @@ namespace SportVitaal.Infrastructure.Data
                     var lesson = new Lesson(workout.Id, startAt, workout.DefaultDurationMinutes, location, instructorId);
 
                     // Populate some reservations so the occupancy dashboard is meaningful.
+                    // In seat-selection rooms (e.g. Spinningruimte) hand out distinct seats so the
+                    // seat map is realistic; other rooms leave the seat unset.
                     if (members.Count > 0)
                     {
                         var count = rng.Next(0, members.Count + 1);
+                        var seat = 1;
                         foreach (var member in members.OrderBy(_ => rng.Next()).Take(count))
-                            lesson.Reserve(member.Id);
+                        {
+                            int? seatNumber = location.AllowsSeatSelection ? seat++ : null;
+                            lesson.Reserve(member.Id, seatNumber);
+                        }
                     }
 
                     lessons.Add(lesson);
@@ -179,6 +236,57 @@ namespace SportVitaal.Infrastructure.Data
 
             await db.Lessons.AddRangeAsync(lessons);
             await db.SaveChangesAsync();
+        }
+
+        // A single development-only lesson whose check-in window is effectively always open: it
+        // starts in the recent past and runs for ~10 years, so [StartAt-30min, StartAt+Duration]
+        // always contains "now". It is reserved for every member so any test account can check in
+        // (use RFID check-in to skip the GPS/club-location verification). Idempotent: identified by
+        // its dedicated "DEV Testles" workout, backfills reservations for any member missing one.
+        private static async Task EnsureDevTestLessonAsync(AppDbContext db)
+        {
+            var workout = db.Workouts.FirstOrDefault(w => w.Name == DevTestWorkoutName);
+            if (workout is null)
+            {
+                workout = new Workout(DevTestWorkoutName, 60, "Altijd open voor inchecken (alleen voor testen)");
+                await db.Workouts.AddAsync(workout);
+                await db.SaveChangesAsync();
+            }
+
+            // Include Location/Reservations: Lesson.Reserve reads Capacity (= Location.Capacity)
+            // and checks existing reservations, both of which would be null/empty otherwise.
+            var lesson = db.Lessons
+                .Include(l => l.Location)
+                .Include(l => l.Reservations)
+                .FirstOrDefault(l => l.WorkoutId == workout.Id);
+            if (lesson is null)
+            {
+                var location = db.Locations.First(l => l.Name == "Zaal 1");
+                var startAt = DateTime.SpecifyKind(new DateTime(2026, 6, 1), DateTimeKind.Utc);
+                const int tenYearsInMinutes = 10 * 365 * 24 * 60; // 5,256,000
+                lesson = new Lesson(workout.Id, startAt, tenYearsInMinutes, location);
+                await db.Lessons.AddAsync(lesson);
+                await db.SaveChangesAsync();
+            }
+
+            // Reserve for every member that does not already have a reservation for this lesson.
+            var reservedMemberIds = db.Reservations
+                .Where(r => r.LessonId == lesson.Id)
+                .Select(r => r.MemberId)
+                .ToHashSet();
+
+            var changed = false;
+            foreach (var member in db.Users.Where(u => u.Role == Role.Member).ToList())
+            {
+                if (reservedMemberIds.Contains(member.Id)) continue;
+
+                var reservation = lesson.Reserve(member.Id);
+                // Client-generated Guid keys would otherwise be tracked as Modified, so add explicitly.
+                if (reservation != null) await db.Reservations.AddAsync(reservation);
+                changed = true;
+            }
+
+            if (changed) await db.SaveChangesAsync();
         }
 
         private static UserAccount CreateUser(string email, string fullName, Role role, string password)

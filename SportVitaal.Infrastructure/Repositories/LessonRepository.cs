@@ -29,7 +29,18 @@ namespace SportVitaal.Infrastructure.Repositories
         {
             return await _db.Lessons
                 .Include(l => l.Reservations)
+                .Include(l => l.Location)
                 .FirstOrDefaultAsync(l => l.Id == id);
+        }
+
+        public async Task<IEnumerable<Lesson>> GetByIdsAsync(IEnumerable<Guid> ids)
+        {
+            var idList = ids.ToList();
+            return await _db.Lessons
+                .Include(l => l.Reservations)
+                .Include(l => l.Location)
+                .Where(l => idList.Contains(l.Id))
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Lesson>> GetLessonsInRangeAsync(DateTime from, DateTime to)
@@ -48,6 +59,16 @@ namespace SportVitaal.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Lesson>> GetForInstructorAsync(Guid instructorId, DateTime from, DateTime to)
+        {
+            return await _db.Lessons
+                .Include(l => l.Reservations)
+                .Include(l => l.Location)
+                .Where(l => l.InstructorId == instructorId && l.StartAt >= from && l.StartAt <= to)
+                .OrderBy(l => l.StartAt)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Lesson>> GetForOccupancyAsync(DateTime from, DateTime to)
         {
             return await _db.Lessons
@@ -60,7 +81,14 @@ namespace SportVitaal.Infrastructure.Repositories
 
         public Task UpdateAsync(Lesson lesson)
         {
-            _db.Lessons.Update(lesson);
+            // The lesson is normally already tracked (loaded via GetByIdAsync in the same
+            // scope), so change tracking will detect mutations — including newly added
+            // reservations — on its own. Calling Update on a tracked graph would mark every
+            // entity as Modified; because new reservations already carry a client-generated
+            // Guid key, EF would issue an UPDATE for a non-existent row (0 rows affected →
+            // DbUpdateConcurrencyException). Only attach when the entity is detached.
+            if (_db.Entry(lesson).State == EntityState.Detached)
+                _db.Lessons.Update(lesson);
             return Task.CompletedTask;
         }
     }
