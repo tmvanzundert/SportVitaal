@@ -50,17 +50,36 @@ namespace SportVitaal.Application.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) throw new DomainException("User not found.");
 
-            // Simple upgrade policy: start a new membership period from now with the new type
-            DateTime start = DateTime.UtcNow;
-            DateTime? end = newType switch
+            var current = user.Membership ?? throw new DomainException("User has no active membership to upgrade.");
+
+            // An upgrade keeps the already-paid-for period (the pro-rata difference is charged
+            // separately) and only changes the tier.
+            user.StartMembership(new Membership(newType, current.StartDate, current.EndDate));
+
+            await _userRepository.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            var ev = new MembershipPurchasedEvent(Guid.Empty, user.Id);
+            await _dispatcher.DispatchAsync(ev);
+        }
+
+        public async Task RenewMembershipAsync(Guid userId, CancellationToken ct = default)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) throw new DomainException("User not found.");
+
+            var current = user.Membership ?? throw new DomainException("User has no membership to renew.");
+
+            // Renewal extends coverage by one more period from the current end date, so members can
+            // buy ahead before an expiring (yearly) subscription lapses.
+            var baseDate = current.EndDate ?? DateTime.UtcNow;
+            var newEnd = current.Type switch
             {
-                MembershipType.TwiceWeeklyMonthly or MembershipType.UnlimitedMonthly => start.AddMonths(1),
-                MembershipType.TwiceWeeklyYearly or MembershipType.UnlimitedYearly => start.AddYears(1),
+                MembershipType.TwiceWeeklyMonthly or MembershipType.UnlimitedMonthly => baseDate.AddMonths(1),
+                MembershipType.TwiceWeeklyYearly or MembershipType.UnlimitedYearly => baseDate.AddYears(1),
                 _ => throw new DomainException("Invalid membership type")
             };
-
-            var membership = new Membership(newType, start, end);
-            user.StartMembership(membership);
+            current.Extend(newEnd);
 
             await _userRepository.UpdateAsync(user);
             await _unitOfWork.SaveChangesAsync(ct);

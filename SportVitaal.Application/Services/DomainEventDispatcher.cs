@@ -1,70 +1,104 @@
 using SportVitaal.Domain.DomainEvents;
+using SportVitaal.Domain.Entities;
+using SportVitaal.Domain.Enums;
 using SportVitaal.Domain.Services;
 using SportVitaal.Domain.Repositories;
 using SportVitaal.Domain.ValueObjects;
 
-
 namespace SportVitaal.Application.Services
 {
     /// <summary>
-    /// Example/simple implementation of IDomainEventDispatcher that writes
-    /// events to the console. Replace with a proper implementation that
-    /// integrates with messaging/email services in production.
+    /// Dispatches domain events to the notification side. Each handled event both persists an
+    /// in-app <see cref="Notification"/> (surfaced in the MAUI app's feed) and sends an e-mail via
+    /// <see cref="INotificationService"/>.
     /// </summary>
     public class DomainEventDispatcher : IDomainEventDispatcher
     {
         private readonly INotificationService _notificationService;
         private readonly IUserRepository _userRepository;
+        private readonly IWaitingListRepository _waitingListRepository;
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public DomainEventDispatcher(INotificationService notificationService, IUserRepository userRepository)
+        public DomainEventDispatcher(
+            INotificationService notificationService,
+            IUserRepository userRepository,
+            IWaitingListRepository waitingListRepository,
+            INotificationRepository notificationRepository,
+            IUnitOfWork unitOfWork)
         {
             _notificationService = notificationService;
             _userRepository = userRepository;
+            _waitingListRepository = waitingListRepository;
+            _notificationRepository = notificationRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task DispatchAsync(IDomainEvent domainEvent)
         {
             Console.WriteLine($"Domain event dispatched: {domainEvent.GetType().Name}");
 
-            // Handle reservation promoted event by notifying the promoted member
-            if (domainEvent is ReservationPromotedEvent promoted)
+            switch (domainEvent)
             {
-                var user = await _userRepository.GetByIdAsync(promoted.MemberId);
-                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
-                {
-                    var to = new Email(user.Email);
-                    var subject = "A spot became available for your lesson";
-                    var body = $"Good news! A spot was freed up for the lesson {promoted.LessonId} and has been reserved for you. Reservation id: {promoted.ReservationId}.";
-                    await _notificationService.SendEmailAsync(to, subject, body);
-                }
-            }
+                // A previously waitlisted member was promoted into a freed spot.
+                case ReservationPromotedEvent promoted:
+                    await NotifyAsync(promoted.MemberId, NotificationType.WaitlistSpotAvailable,
+                        "Je hebt een plek in de les",
+                        "Er is een plek vrijgekomen en voor jou gereserveerd. Tot in de les!");
+                    break;
 
-            // Handle reservation created event: confirmation to member
-            if (domainEvent is ReservationCreatedEvent created)
-            {
-                var user = await _userRepository.GetByIdAsync(created.UserId);
-                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
-                {
-                    var to = new Email(user.Email);
-                    var subject = "Your reservation is confirmed";
-                    var body = $"Your reservation (id: {created.ReservationId}) for lesson {created.LessonId} is confirmed.";
-                    await _notificationService.SendEmailAsync(to, subject, body);
-                }
-            }
+                // Reservation confirmation for the member.
+                case ReservationCreatedEvent created:
+                    await NotifyAsync(created.UserId, NotificationType.ReservationConfirmed,
+                        "Je reservering is bevestigd",
+                        "Je bent aangemeld voor de les. Je vindt de details in het lesrooster.");
+                    break;
 
-            // Handle membership purchased event: send confirmation
-            if (domainEvent is MembershipPurchasedEvent purchased)
-            {
-                var user = await _userRepository.GetByIdAsync(purchased.UserId);
-                if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                // A spot freed up: notify everyone on the waiting list for this lesson so they can
+                // race to claim the open spot (first come, first served) via the app.
+                case ReservationCancelledEvent cancelled:
                 {
-                    var to = new Email(user.Email);
-                    var subject = "Membership purchase confirmation";
-                    var body = $"Thank you for your purchase. Your membership was processed on {purchased.PurchasedAt:u}.";
-                    await _notificationService.SendEmailAsync(to, subject, body);
+                    var waiting = await _waitingListRepository.GetForLessonAsync(cancelled.LessonId);
+                    foreach (var entry in waiting)
+                    {
+                        await NotifyAsync(entry.MemberId, NotificationType.WaitlistSpotAvailable,
+                            "Er is een plek vrijgekomen voor je les",
+                            "Goed nieuws! Er is een plek vrijgekomen voor een les waarvoor je op de "
+                            + "wachtlijst staat. Reserveer snel in de app, want wie het eerst komt, "
+                            + "het eerst maalt.");
+                    }
+                    break;
                 }
+
+                // Yearly membership expires in ~6 weeks: prompt the member to renew.
+                case MembershipExpiringSoonEvent expiring:
+                    await NotifyAsync(expiring.UserId, NotificationType.MembershipExpiring,
+                        "Je abonnement verloopt binnenkort",
+                        $"Je abonnement verloopt op {expiring.ExpiryDate:dd-MM-yyyy}. "
+                        + "Koop alvast een nieuw abonnement zodat je zonder onderbreking kunt blijven sporten.");
+                    break;
+
+                // Membership purchase/renewal/upgrade confirmation.
+                case MembershipPurchasedEvent purchased:
+                    await NotifyAsync(purchased.UserId, NotificationType.MembershipPurchased,
+                        "Bedankt voor je aankoop",
+                        "Je abonnement is verwerkt. Je kunt het beheren onder 'Abonnement' in de app.");
+                    break;
             }
+        }
+
+        /// <summary>
+        /// Persists an in-app notification for the user and, when an e-mail address is known, also
+        /// sends the same message by e-mail.
+        /// </summary>
+        private async Task NotifyAsync(Guid userId, NotificationType type, string title, string body)
+        {
+            await _notificationRepository.AddAsync(new Notification(userId, type, title, body));
+            await _unitOfWork.SaveChangesAsync();
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+                await _notificationService.SendEmailAsync(new Email(user.Email), title, body);
         }
     }
 }
-

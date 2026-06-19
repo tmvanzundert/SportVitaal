@@ -1,8 +1,0 @@
-@using SportVitaal.Shared
-
-<Router AppAssembly="typeof(SportVitaal.Shared.Layout.MainLayout).Assembly" AdditionalAssemblies="RouteAssemblyRegistry.Additional" NotFoundPage="typeof(SportVitaal.Shared.Pages.NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(SportVitaal.Web.Components.Layout.MainLayout)"/>
-        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
-    </Found>
-</Router>
