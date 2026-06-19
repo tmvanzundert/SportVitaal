@@ -61,10 +61,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
-    // Seed essential data (workouts, locations). In development also seed an always-open
-    // test lesson so check-in can be exercised at any time.
-    SeedData.EnsureSeedDataAsync(db, includeDevTestLesson: app.Environment.IsDevelopment())
-        .GetAwaiter().GetResult();
+    // Seed essential data (workouts, locations).
+    SeedData.EnsureSeedDataAsync(db).GetAwaiter().GetResult();
 }
 
 // Configure the HTTP request pipeline.

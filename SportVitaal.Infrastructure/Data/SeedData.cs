@@ -7,10 +7,7 @@ namespace SportVitaal.Infrastructure.Data
 {
     public static class SeedData
     {
-        // Name marker for the development-only test lesson (see EnsureDevTestLessonAsync).
-        private const string DevTestWorkoutName = "DEV Testles";
-
-        public static async Task EnsureSeedDataAsync(AppDbContext db, bool includeDevTestLesson = false)
+        public static async Task EnsureSeedDataAsync(AppDbContext db)
         {
             await EnsureWorkoutsAndLocationsAsync(db);
             await EnsureInstructorsAsync(db);
@@ -18,9 +15,6 @@ namespace SportVitaal.Infrastructure.Data
             await EnsureInstructorAccountsAsync(db);
             await EnsureMembersAsync(db);
             await EnsureScheduleAsync(db);
-
-            if (includeDevTestLesson)
-                await EnsureDevTestLessonAsync(db);
         }
 
         private static async Task EnsureWorkoutsAndLocationsAsync(AppDbContext db)
@@ -236,57 +230,6 @@ namespace SportVitaal.Infrastructure.Data
 
             await db.Lessons.AddRangeAsync(lessons);
             await db.SaveChangesAsync();
-        }
-
-        // A single development-only lesson whose check-in window is effectively always open: it
-        // starts in the recent past and runs for ~10 years, so [StartAt-30min, StartAt+Duration]
-        // always contains "now". It is reserved for every member so any test account can check in
-        // (use RFID check-in to skip the GPS/club-location verification). Idempotent: identified by
-        // its dedicated "DEV Testles" workout, backfills reservations for any member missing one.
-        private static async Task EnsureDevTestLessonAsync(AppDbContext db)
-        {
-            var workout = db.Workouts.FirstOrDefault(w => w.Name == DevTestWorkoutName);
-            if (workout is null)
-            {
-                workout = new Workout(DevTestWorkoutName, 60, "Altijd open voor inchecken (alleen voor testen)");
-                await db.Workouts.AddAsync(workout);
-                await db.SaveChangesAsync();
-            }
-
-            // Include Location/Reservations: Lesson.Reserve reads Capacity (= Location.Capacity)
-            // and checks existing reservations, both of which would be null/empty otherwise.
-            var lesson = db.Lessons
-                .Include(l => l.Location)
-                .Include(l => l.Reservations)
-                .FirstOrDefault(l => l.WorkoutId == workout.Id);
-            if (lesson is null)
-            {
-                var location = db.Locations.First(l => l.Name == "Zaal 1");
-                var startAt = DateTime.SpecifyKind(new DateTime(2026, 6, 1), DateTimeKind.Utc);
-                const int tenYearsInMinutes = 10 * 365 * 24 * 60; // 5,256,000
-                lesson = new Lesson(workout.Id, startAt, tenYearsInMinutes, location);
-                await db.Lessons.AddAsync(lesson);
-                await db.SaveChangesAsync();
-            }
-
-            // Reserve for every member that does not already have a reservation for this lesson.
-            var reservedMemberIds = db.Reservations
-                .Where(r => r.LessonId == lesson.Id)
-                .Select(r => r.MemberId)
-                .ToHashSet();
-
-            var changed = false;
-            foreach (var member in db.Users.Where(u => u.Role == Role.Member).ToList())
-            {
-                if (reservedMemberIds.Contains(member.Id)) continue;
-
-                var reservation = lesson.Reserve(member.Id);
-                // Client-generated Guid keys would otherwise be tracked as Modified, so add explicitly.
-                if (reservation != null) await db.Reservations.AddAsync(reservation);
-                changed = true;
-            }
-
-            if (changed) await db.SaveChangesAsync();
         }
 
         private static UserAccount CreateUser(string email, string fullName, Role role, string password)
