@@ -19,7 +19,6 @@
             @if (_editId is null)
             {
                 <div class="col-md-6"><input class="form-control" type="email" placeholder="E-mailadres" @bind="_email"/></div>
-                <div class="col-md-6"><input class="form-control" type="password" placeholder="Wachtwoord" @bind="_password"/></div>
             }
             <div class="col-md-6 d-flex gap-2">
                 <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_busy">@(_editId is null ? "Toevoegen" : "Opslaan")</button>
@@ -31,7 +30,7 @@
         </div>
         <p class="text-muted small mt-2 mb-0">
             @(_editId is null
-                ? "De instructeur krijgt een eigen inlogaccount met de rol instructeur. Een foto kun je na het toevoegen uploaden in de lijst hieronder."
+                ? "De instructeur krijgt een eigen inlogaccount met de rol instructeur. Een wachtwoord wordt automatisch gegenereerd en per e-mail verstuurd. Een foto kun je na het toevoegen uploaden in de lijst hieronder."
                 : "Een foto kun je per instructeur uploaden in de lijst hieronder.")
         </p>
     </div>
@@ -85,7 +84,6 @@ else
     private Guid? _editId;
     private string _name = string.Empty;
     private string _email = string.Empty;
-    private string _password = string.Empty;
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -108,7 +106,6 @@ else
         _editId = null;
         _name = string.Empty;
         _email = string.Empty;
-        _password = string.Empty;
     }
 
     private async Task SaveAsync()
@@ -118,7 +115,6 @@ else
         if (_editId is null)
         {
             if (string.IsNullOrWhiteSpace(_email)) { _error = "E-mailadres is verplicht."; return; }
-            if (string.IsNullOrWhiteSpace(_password)) { _error = "Wachtwoord is verplicht."; return; }
         }
 
         _busy = true;
@@ -126,7 +122,7 @@ else
         {
             if (_editId is null)
             {
-                var (ok, error) = await Api.CreateInstructorAsync(_name, _email, _password);
+                var (ok, error) = await Api.CreateInstructorAsync(_name, _email);
                 if (!ok) { _error = string.IsNullOrWhiteSpace(error) ? "Opslaan mislukt." : error; return; }
             }
             else if (!await Api.UpdateInstructorAsync(_editId.Value, _name))

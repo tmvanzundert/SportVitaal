@@ -4,6 +4,9 @@ using SportVitaal.Application.Services;
 using SportVitaal.Domain.Entities;
 using SportVitaal.Domain.Enums;
 using SportVitaal.Domain.Repositories;
+using SportVitaal.Domain.Services;
+using SportVitaal.Domain.ValueObjects;
+using System.Security.Cryptography;
 
 namespace SportVitaal.WebApi.Controllers
 {
@@ -20,13 +23,15 @@ namespace SportVitaal.WebApi.Controllers
         private readonly IUserRepository _users;
         private readonly IUnitOfWork _uow;
         private readonly IWebHostEnvironment _env;
+        private readonly INotificationService _notifications;
 
-        public InstructorsController(IInstructorRepository repo, IUserRepository users, IUnitOfWork uow, IWebHostEnvironment env)
+        public InstructorsController(IInstructorRepository repo, IUserRepository users, IUnitOfWork uow, IWebHostEnvironment env, INotificationService notifications)
         {
             _repo = repo;
             _users = users;
             _uow = uow;
             _env = env;
+            _notifications = notifications;
         }
 
         // Instructors are part of the public-facing schedule, so listing them is open.
@@ -55,8 +60,6 @@ namespace SportVitaal.WebApi.Controllers
         {
             if (string.IsNullOrWhiteSpace(dto.Email))
                 return BadRequest("E-mailadres is verplicht.");
-            if (string.IsNullOrWhiteSpace(dto.Password))
-                return BadRequest("Wachtwoord is verplicht.");
 
             var existing = await _users.GetByEmailAsync(dto.Email);
             if (existing != null)
@@ -65,13 +68,29 @@ namespace SportVitaal.WebApi.Controllers
             var instructor = new Instructor(dto.Name, dto.PhotoUrl);
             await _repo.AddAsync(instructor);
 
+            // The instructor never chooses their own password here; we generate a strong temporary
+            // one and e-mail it so the credentials are never entered or stored by the employee.
+            var password = GenerateTemporaryPassword();
+
             var user = new UserAccount(dto.Email, Role.Instructor);
             user.UpdateProfile(null, dto.Name, null);
-            user.SetPasswordHash(PasswordHasher.HashPassword(dto.Password));
+            user.SetPasswordHash(PasswordHasher.HashPassword(password));
             user.LinkInstructor(instructor.Id);
             await _users.AddAsync(user);
 
             await _uow.SaveChangesAsync();
+
+            await _notifications.SendEmailAsync(
+                new Email(dto.Email),
+                "Je SportVitaal instructeur-account",
+                $"Hallo {dto.Name},\n\n" +
+                "Er is een instructeur-account voor je aangemaakt bij SportVitaal.\n\n" +
+                $"Inloggegevens:\n" +
+                $"  E-mailadres: {dto.Email}\n" +
+                $"  Wachtwoord:  {password}\n\n" +
+                "Log in en wijzig je wachtwoord zo snel mogelijk.\n\n" +
+                "Met sportieve groet,\nSportVitaal");
+
             return CreatedAtAction(nameof(Get), new { id = instructor.Id }, instructor);
         }
 
@@ -148,6 +167,17 @@ namespace SportVitaal.WebApi.Controllers
 
         private Task<UserAccount?> FindAccountAsync(Guid instructorId)
             => _users.GetByInstructorIdAsync(instructorId);
+
+        // Generates a 16-character random password from a URL-safe alphabet (no ambiguous
+        // characters) using a cryptographically secure RNG.
+        private static string GenerateTemporaryPassword()
+        {
+            const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+            Span<char> chars = stackalloc char[16];
+            for (int i = 0; i < chars.Length; i++)
+                chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
+            return new string(chars);
+        }
     }
 
     public class InstructorDto
@@ -160,7 +190,6 @@ namespace SportVitaal.WebApi.Controllers
     {
         public string Name { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public string Password { get; set; } = null!;
         public string? PhotoUrl { get; set; }
     }
 }

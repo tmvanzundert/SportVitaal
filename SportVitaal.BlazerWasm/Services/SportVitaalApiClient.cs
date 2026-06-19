@@ -110,13 +110,14 @@ namespace SportVitaal.BlazerWasm.Services
 
         // ---- Admin: instructors ----
 
-        // Creating an instructor provisions a full login account with the Instructor role, so an
-        // e-mail and password are required alongside the name.
-        public async Task<(bool ok, string? error)> CreateInstructorAsync(string name, string email, string password, CancellationToken ct = default)
+        // Creating an instructor provisions a full login account with the Instructor role. The
+        // server generates a password and e-mails it to the instructor, so only name and e-mail
+        // are supplied here.
+        public async Task<(bool ok, string? error)> CreateInstructorAsync(string name, string email, CancellationToken ct = default)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/instructors")
             {
-                Content = JsonContent.Create(new { name, email, password }, options: JsonOptions)
+                Content = JsonContent.Create(new { name, email }, options: JsonOptions)
             };
             Authorize(request);
             var resp = await _http.SendAsync(request, ct);
