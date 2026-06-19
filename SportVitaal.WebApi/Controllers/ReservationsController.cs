@@ -164,10 +164,61 @@ namespace SportVitaal.WebApi.Controllers
                 durationMinutes = l.DurationMinutes,
                 location = l.Location.Name,
                 reserved = l.Reservations.Count(r => r.Status != ReservationStatus.Cancelled),
+                attended = l.Reservations.Count(r => r.Status == ReservationStatus.Attended),
                 capacity = l.Capacity
             });
 
             return Ok(result);
+        }
+
+        // The attendance roster for one of the instructor's own lessons: every registered member with
+        // whether they have checked in (attended) at the door yet. Backs the MAUI "Aanmeldingen" screen.
+        [HttpGet("instructor/lesson/{lessonId:guid}/attendance")]
+        [Authorize]
+        public async Task<IActionResult> InstructorAttendance(Guid lessonId)
+        {
+            if (!TryGetUserId(out var userId)) return Unauthorized();
+
+            var user = await _userRepo.GetByIdAsync(userId);
+            if (user is null || user.Role != SportVitaal.Domain.Enums.Role.Instructor || user.InstructorId is not { } instructorId)
+                return Forbid();
+
+            var lesson = (await _lessonRepo.GetByIdsAsync(new[] { lessonId })).FirstOrDefault();
+            if (lesson == null) return NotFound();
+            if (lesson.InstructorId != instructorId) return Forbid();
+
+            var workout = await _workoutRepo.GetByIdAsync(lesson.WorkoutId);
+            var active = lesson.Reservations.Where(r => r.Status != ReservationStatus.Cancelled).ToList();
+
+            var participants = new List<object>();
+            foreach (var r in active.OrderBy(r => r.SeatNumber ?? int.MaxValue))
+            {
+                var u = await _userRepo.GetByIdAsync(r.MemberId);
+                // The instructor is staff, so the member's full name may be shown here (unlike the
+                // member-to-member lesson detail). Fall back to the username, then a neutral label.
+                var name = !string.IsNullOrWhiteSpace(u?.FullName) ? u!.FullName!
+                    : !string.IsNullOrWhiteSpace(u?.UserName) ? u!.UserName!
+                    : "Lid";
+                participants.Add(new
+                {
+                    name,
+                    seat = r.SeatNumber,
+                    checkedIn = r.Status == ReservationStatus.Attended
+                });
+            }
+
+            return Ok(new
+            {
+                lessonId = lesson.Id,
+                workout = workout?.Name ?? "Les",
+                startAt = lesson.StartAt,
+                durationMinutes = lesson.DurationMinutes,
+                location = lesson.Location.Name,
+                capacity = lesson.Capacity,
+                reserved = active.Count,
+                attended = active.Count(r => r.Status == ReservationStatus.Attended),
+                participants
+            });
         }
 
         private bool TryGetUserId(out Guid userId)

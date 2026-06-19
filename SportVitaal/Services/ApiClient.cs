@@ -176,6 +176,10 @@ public class ApiClient
     public async Task<IReadOnlyList<InstructorLesson>> GetInstructorLessonsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<InstructorLesson>>("api/reservations/instructor/mine", Json, ct) ?? [];
 
+    /// <summary>The attendance roster for one of the instructor's lessons: each registered member and whether they checked in.</summary>
+    public async Task<InstructorAttendance?> GetInstructorAttendanceAsync(Guid lessonId, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<InstructorAttendance>($"api/reservations/instructor/lesson/{lessonId}/attendance", Json, ct);
+
     /// <summary>Lessons the member is waitlisted for that now have a free spot (in-app alert).</summary>
     public async Task<IReadOnlyList<WaitlistAlert>> GetWaitlistAlertsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<WaitlistAlert>>("api/reservations/waitlist/available", Json, ct) ?? [];
@@ -364,7 +368,12 @@ public class ApiClient
     public record HistoryLesson(Guid LessonId, string Workout, DateTime StartAt, int DurationMinutes, string? Instructor);
 
     public record InstructorLesson(Guid LessonId, string Workout, DateTime StartAt, int DurationMinutes,
-        string Location, int Reserved, int Capacity);
+        string Location, int Reserved, int Attended, int Capacity);
+
+    public record InstructorAttendance(Guid LessonId, string Workout, DateTime StartAt, int DurationMinutes,
+        string Location, int Capacity, int Reserved, int Attended, List<AttendanceParticipant> Participants);
+
+    public record AttendanceParticipant(string Name, int? Seat, bool CheckedIn);
 
     public record ScheduleLesson(Guid LessonId, string Workout, DateTime StartAt, int DurationMinutes,
         string? Instructor, int Reserved, int Capacity, bool ReservedByMe);

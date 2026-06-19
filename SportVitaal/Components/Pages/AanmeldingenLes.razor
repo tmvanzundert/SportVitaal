@@ -1,0 +1,100 @@
+@page "/aanmeldingen/{LessonId:guid}"
+@inject SportVitaal.ViewModels.InstructorAttendanceViewModel Vm
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="screen">
+    <header class="head">
+        <button class="back" @onclick='() => Nav.NavigateTo("aanmeldingen")' aria-label="Terug">←</button>
+        <h1>Aanwezigheid</h1>
+    </header>
+
+    @if (!Vm.Loaded)
+    {
+        <p class="muted">Laden…</p>
+    }
+    else if (!Vm.HasLesson)
+    {
+        <p class="empty">Les niet gevonden.</p>
+    }
+    else
+    {
+        <section class="card lesinfo">
+            <span class="label">LES</span>
+            <div class="lesrow">
+                <span class="les-icon">📋</span>
+                <div>
+                    <strong>@Vm.Workout</strong>
+                    <div class="muted">@Vm.TimeRange · @Vm.Location</div>
+                </div>
+            </div>
+            <div class="summary">
+                <span class="present">@Vm.Attended aanwezig</span>
+                <span class="muted">van @Vm.Reserved aangemeld</span>
+            </div>
+        </section>
+
+        <h3 class="section">Aangemeld (@Vm.Reserved)</h3>
+        <section class="card participants">
+            @if (Vm.Participants.Count == 0)
+            {
+                <p class="muted">Nog geen aanmeldingen.</p>
+            }
+            @foreach (var p in Vm.Participants)
+            {
+                <div class="participant">
+                    <span class="pav" style="background:@p.Color">@p.Initials</span>
+                    <span class="pname">@p.Name</span>
+                    @if (p.CheckedIn)
+                    {
+                        <span class="badge present">✓ Aanwezig</span>
+                    }
+                    else
+                    {
+                        <span class="badge absent">Niet aangemeld</span>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid LessonId { get; set; }
+
+    // Poll the roster so the instructor sees new arrivals at the door without leaving the screen.
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
+    private readonly CancellationTokenSource _cts = new();
+
+    // Blazor does not observe INotifyPropertyChanged, so bridge view model changes to a re-render.
+    protected override void OnInitialized() => Vm.PropertyChanged += OnViewModelChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.LoadCommand.ExecuteAsync(LessonId);
+        _ = PollAsync(_cts.Token);
+    }
+
+    private async Task PollAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(PollInterval);
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                // Reuses Load, which refreshes in place without the "Laden…" flicker once loaded.
+                await Vm.LoadCommand.ExecuteAsync(LessonId);
+            }
+        }
+        catch (OperationCanceledException) { /* page disposed */ }
+    }
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+        Vm.PropertyChanged -= OnViewModelChanged;
+    }
+}

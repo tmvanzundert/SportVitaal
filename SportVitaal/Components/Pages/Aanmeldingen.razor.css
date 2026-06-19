@@ -1,0 +1,109 @@
+.screen {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
+    background: #f2f3f5;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.3rem;
+}
+
+.back {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.head h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.sub {
+    margin: .1rem 0 0;
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    text-transform: uppercase;
+}
+
+.section {
+    margin: 1.4rem 0 .8rem;
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+    margin-bottom: 1rem;
+}
+
+.muted {
+    color: #8e8e93;
+    font-size: .85rem;
+}
+
+.lesson {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: .9rem;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.lesson-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #f26522;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lesson-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.att {
+    text-align: right;
+    font-size: .72rem;
+}
+
+.att-count {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1c1c1e;
+}
+
+.empty {
+    text-align: center;
+    color: #8e8e93;
+    margin-top: 2.5rem;
+}

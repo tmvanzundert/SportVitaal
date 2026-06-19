@@ -41,33 +41,40 @@ namespace SportVitaal.Application.Services
             if (lesson.StartAt > DateTime.UtcNow.AddDays(7))
                 throw new DomainException("Reservations can only be made up to one week in advance.");
 
-            // Load user and ensure active membership
+            // Load user
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) throw new DomainException("User not found.");
-            if (user.Membership == null || !user.Membership.IsActive)
-                throw new DomainException("User must have an active membership to reserve lessons.");
 
-            // Enforce weekly reservation limits based on membership type
-            var membershipType = user.Membership.Type;
-            int? weeklyLimit = membershipType switch
+            // Instructors take part in lessons as staff: they may always reserve, so the active-membership
+            // requirement and the membership-based weekly cap do not apply to them.
+            if (user.Role != Role.Instructor)
             {
-                Domain.Enums.MembershipType.TwiceWeeklyMonthly => 2,
-                Domain.Enums.MembershipType.TwiceWeeklyYearly => 2,
-                _ => null // null means unlimited
-            };
+                // Ensure active membership
+                if (user.Membership == null || !user.Membership.IsActive)
+                    throw new DomainException("User must have an active membership to reserve lessons.");
 
-            if (weeklyLimit != null)
-            {
-                // determine week range (Monday .. Sunday) for the lesson start
-                var lessonDate = lesson.StartAt.Date;
-                var weekStart = lessonDate;
-                while (weekStart.DayOfWeek != DayOfWeek.Monday)
-                    weekStart = weekStart.AddDays(-1);
-                var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+                // Enforce weekly reservation limits based on membership type
+                var membershipType = user.Membership.Type;
+                int? weeklyLimit = membershipType switch
+                {
+                    Domain.Enums.MembershipType.TwiceWeeklyMonthly => 2,
+                    Domain.Enums.MembershipType.TwiceWeeklyYearly => 2,
+                    _ => null // null means unlimited
+                };
 
-                var count = await _reservationRepository.CountReservationsForUserInRangeAsync(userId, weekStart, weekEnd, ct);
-                if (count >= weeklyLimit.Value)
-                    throw new DomainException($"Membership allows a maximum of {weeklyLimit} reservations per week.");
+                if (weeklyLimit != null)
+                {
+                    // determine week range (Monday .. Sunday) for the lesson start
+                    var lessonDate = lesson.StartAt.Date;
+                    var weekStart = lessonDate;
+                    while (weekStart.DayOfWeek != DayOfWeek.Monday)
+                        weekStart = weekStart.AddDays(-1);
+                    var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+
+                    var count = await _reservationRepository.CountReservationsForUserInRangeAsync(userId, weekStart, weekEnd, ct);
+                    if (count >= weeklyLimit.Value)
+                        throw new DomainException($"Membership allows a maximum of {weeklyLimit} reservations per week.");
+                }
             }
 
             // Seats are flat 1..Capacity numbers (e.g. the 24 spinning bikes). Range and

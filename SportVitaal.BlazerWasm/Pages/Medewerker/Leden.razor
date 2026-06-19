@@ -1,6 +1,7 @@
 @page "/medewerker/leden"
 @layout AdminLayout
 @inject SportVitaalApiClient Api
+@inject IJSRuntime JS
 
 <PageTitle>Leden</PageTitle>
 
@@ -24,7 +25,7 @@ else
 {
     <table class="table align-middle">
         <thead>
-            <tr><th>E-mail</th><th>Naam</th><th>Abonnement</th><th>Status</th><th>Periode</th></tr>
+            <tr><th>E-mail</th><th>Naam</th><th>Abonnement</th><th>Status</th><th>Periode</th><th></th></tr>
         </thead>
         <tbody>
             @foreach (var m in _members)
@@ -55,6 +56,9 @@ else
                             @(m.Membership.EndDate?.ToString("d MMM yyyy") ?? "doorlopend")
                         }
                     </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAsync(m)" disabled="@_busy">Verwijderen</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -64,13 +68,33 @@ else
 @code {
     private List<MemberDto> _members = new();
     private bool _loading = true;
+    private bool _busy;
     private string? _error;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
-        try { _members = await Api.GetMembersAsync(); }
+        _loading = true;
+        try { _members = await Api.GetMembersAsync(); _error = null; }
         catch { _error = "Kon de ledenlijst niet laden."; }
         finally { _loading = false; }
+    }
+
+    private async Task DeleteAsync(MemberDto m)
+    {
+        var label = string.IsNullOrWhiteSpace(m.FullName) ? m.Email : m.FullName;
+        if (!await JS.InvokeAsync<bool>("confirm", $"Lid '{label}' definitief verwijderen?"))
+            return;
+
+        _busy = true;
+        try
+        {
+            if (!await Api.DeleteMemberAsync(m.Id)) { _error = "Verwijderen mislukt."; return; }
+            _error = null;
+            await LoadAsync();
+        }
+        finally { _busy = false; }
     }
 
     private static string Describe(string type) => type switch

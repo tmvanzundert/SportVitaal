@@ -30,6 +30,8 @@ public static class MauiProgram
         builder.Services.AddTransient<HistoryViewModel>();
         builder.Services.AddTransient<CheckInViewModel>();
         builder.Services.AddTransient<NotificationsViewModel>();
+        builder.Services.AddTransient<InstructorLessonsViewModel>();
+        builder.Services.AddTransient<InstructorAttendanceViewModel>();
 
         builder.Services.AddMauiBlazorWebView();
 

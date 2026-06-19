@@ -82,7 +82,7 @@
         <div class="action clickable" @onclick='() => Nav.NavigateTo("historie")'><span class="icon">🕑</span>Historie</div>
         @if (Vm.IsInstructor)
         {
-            <div class="action"><span class="icon">📋</span>Aanmeldingen</div>
+            <div class="action clickable" @onclick='() => Nav.NavigateTo("aanmeldingen")'><span class="icon">📋</span>Aanmeldingen</div>
         }
     </div>
 

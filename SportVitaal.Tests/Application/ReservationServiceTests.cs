@@ -103,6 +103,37 @@ public class ReservationServiceTests
     }
 
     [Test]
+    public async Task ReserveAsync_InstructorWithoutMembership_Reserves()
+    {
+        // Instructors take part in lessons as staff and may always reserve, even with no membership.
+        var instructor = new UserAccount($"{Guid.NewGuid():N}@test.com", Role.Instructor);
+        _store.Users.Add(instructor);
+        var lesson = AddLesson(GroupRoom());
+
+        await _service.ReserveAsync(instructor.Id, lesson.Id);
+
+        Assert.That(_store.Reservations, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ReserveAsync_Instructor_NotSubjectToWeeklyCap()
+    {
+        // The membership-based weekly cap does not apply to instructors, so more than two in a week is fine.
+        var instructor = new UserAccount($"{Guid.NewGuid():N}@test.com", Role.Instructor);
+        _store.Users.Add(instructor);
+        var monday = DateTime.UtcNow.AddDays(1);
+        var l1 = AddLesson(GroupRoom(), monday);
+        var l2 = AddLesson(GroupRoom(), monday.AddHours(2));
+        var l3 = AddLesson(GroupRoom(), monday.AddHours(4));
+
+        await _service.ReserveAsync(instructor.Id, l1.Id);
+        await _service.ReserveAsync(instructor.Id, l2.Id);
+        await _service.ReserveAsync(instructor.Id, l3.Id);
+
+        Assert.That(_store.Reservations, Has.Count.EqualTo(3));
+    }
+
+    [Test]
     public async Task ReserveAsync_TwiceWeekly_ThirdReservationInWeek_Throws()
     {
         var member = AddMember(MembershipType.TwiceWeeklyMonthly);

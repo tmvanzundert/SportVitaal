@@ -176,6 +176,9 @@ namespace SportVitaal.BlazerWasm.Services
         public async Task<List<MemberDto>> GetMembersAsync(CancellationToken ct = default)
             => await GetAuthAsync<List<MemberDto>>("api/users/members", ct) ?? new();
 
+        public Task<bool> DeleteMemberAsync(Guid id, CancellationToken ct = default)
+            => SendAuthAsync(HttpMethod.Delete, $"api/users/members/{id}", null, ct);
+
         // ---- helpers ----
 
         private async Task<bool> SendAuthAsync(HttpMethod method, string url, object? body, CancellationToken ct)

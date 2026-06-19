@@ -49,6 +49,21 @@ namespace SportVitaal.WebApi.Controllers
             return Ok(result);
         }
 
+        // Employees can remove a member account.
+        [HttpDelete("members/{id}")]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> DeleteMember(Guid id)
+        {
+            var user = await _userRepo.GetByIdAsync(id);
+            if (user == null) return NotFound();
+            if (user.Role != SportVitaal.Domain.Enums.Role.Member)
+                return BadRequest("Only member accounts can be removed here.");
+
+            await _userRepo.DeleteAsync(id);
+            await _uow.SaveChangesAsync();
+            return NoContent();
+        }
+
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> Me()

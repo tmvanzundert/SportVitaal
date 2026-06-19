@@ -1,0 +1,150 @@
+.screen {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2.5rem 1.25rem calc(3rem + env(safe-area-inset-bottom));
+    background: #f2f3f5;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1c1c1e;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-bottom: 1.3rem;
+}
+
+.back {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+}
+
+.head h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.section {
+    margin: 1.4rem 0 .8rem;
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.1rem 1.2rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+    margin-bottom: 1rem;
+}
+
+.muted {
+    color: #8e8e93;
+    font-size: .85rem;
+}
+
+.empty {
+    text-align: center;
+    color: #8e8e93;
+    margin-top: 2.5rem;
+}
+
+.label {
+    color: #8e8e93;
+    letter-spacing: .1em;
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.lesrow {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-top: .6rem;
+}
+
+.les-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #f26522;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.summary {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    margin-top: .9rem;
+    padding-top: .9rem;
+    border-top: 1px solid #f0f0f2;
+}
+
+.summary .present {
+    font-weight: 700;
+    color: #1aa179;
+}
+
+.participant {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .55rem 0;
+}
+
+.participant:not(:last-child) {
+    border-bottom: 1px solid #f0f0f2;
+}
+
+.pav {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pname {
+    flex: 1;
+    font-weight: 600;
+    font-size: .95rem;
+}
+
+.badge {
+    flex-shrink: 0;
+    padding: .25rem .6rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+.badge.present {
+    background: #e3f7ee;
+    color: #1aa179;
+}
+
+.badge.absent {
+    background: #f0f0f2;
+    color: #8e8e93;
+}
