@@ -1,5 +1,6 @@
 @using SportVitaal.Services
 @inject ApiClient Api
+@inject NavigationManager Nav
 @implements IDisposable
 
 @if (!_ready)
@@ -25,7 +26,16 @@ else
         _ready = true;
     }
 
-    private void OnChanged() => InvokeAsync(StateHasChanged);
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        // After logout the NavigationManager still points at the deep page the user
+        // signed out from (e.g. /profiel). Reset to the root so the next login lands
+        // on the dashboard rather than re-routing to that stale URL.
+        if (_ready && !Api.IsLoggedIn && !string.IsNullOrEmpty(Nav.ToBaseRelativePath(Nav.Uri)))
+            Nav.NavigateTo("");
+
+        StateHasChanged();
+    });
 
     public void Dispose() => Api.Changed -= OnChanged;
 }
