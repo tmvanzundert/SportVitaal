@@ -26,7 +26,7 @@ public partial class LessonDetailViewModel : ObservableObject
     public string Workout => _d?.Workout ?? "Les";
     public string? Description => _d?.Description;
     public string Subtitle => $"{_d?.DurationMinutes ?? 0} min · {_d?.Instructor ?? "nnb"}";
-    public string Time => _d?.StartAt.ToString("HH:mm") ?? "—";
+    public string Time => _d?.StartAt.ToLocalTime().ToString("HH:mm") ?? "—";
     public string Duration => $"{_d?.DurationMinutes ?? 0} min";
     public string Plekken => _d is null ? "—" : $"{_d.Reserved}/{_d.Capacity}";
 

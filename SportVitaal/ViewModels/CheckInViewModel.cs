@@ -31,7 +31,7 @@ public partial class CheckInViewModel : ObservableObject
 
     /// <summary>Time span of the lesson, e.g. "09:00 – 09:45".</summary>
     public string TimeRange => _lesson is { } l
-        ? $"{l.StartAt:HH:mm} – {l.StartAt.AddMinutes(l.DurationMinutes):HH:mm}"
+        ? $"{l.StartAt.ToLocalTime():HH:mm} – {l.StartAt.ToLocalTime().AddMinutes(l.DurationMinutes):HH:mm}"
         : "—";
 
     [RelayCommand]

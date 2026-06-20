@@ -38,7 +38,7 @@ public partial class ScheduleViewModel : ObservableObject
         .ToList();
 
     public IReadOnlyList<LessonRow> Lessons => _all
-        .Where(l => l.StartAt.Date == Selected.Date)
+        .Where(l => l.StartAt.ToLocalTime().Date == Selected.Date)
         .Select(ToRow)
         .ToList();
 
@@ -73,7 +73,10 @@ public partial class ScheduleViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            _all = await _api.GetScheduleAsync(WeekStart, WeekStart.AddDays(7));
+            // Pad the range a day on each side: StartAt is stored in UTC while the week
+            // bounds are local, so a lesson near midnight could otherwise fall just outside
+            // the window. The per-day filter (ToLocalTime) still shows only the right days.
+            _all = await _api.GetScheduleAsync(WeekStart.AddDays(-1), WeekStart.AddDays(8));
         }
         catch
         {
@@ -94,7 +97,7 @@ public partial class ScheduleViewModel : ObservableObject
         return new LessonRow(
             l.LessonId,
             l.Workout,
-            $"{l.StartAt:HH:mm} · {l.DurationMinutes} min",
+            $"{l.StartAt.ToLocalTime():HH:mm} · {l.DurationMinutes} min",
             l.Instructor ?? "nnb",
             $"{l.Reserved}/{l.Capacity}",
             percent,

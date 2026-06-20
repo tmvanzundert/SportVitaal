@@ -28,7 +28,7 @@ else
         @for (var i = 0; i < 7; i++)
         {
             var day = _weekStart.AddDays(i);
-            var dayLessons = _lessons.Where(l => l.StartAt.Date == day).OrderBy(l => l.StartAt).ToList();
+            var dayLessons = _lessons.Where(l => l.StartAt.ToLocalTime().Date == day).OrderBy(l => l.StartAt).ToList();
             <div class="rooster-day @(day == DateTime.Today ? "is-today" : "")">
                 <div class="rooster-day-head">
                     <span class="rooster-day-name">@day.ToString("ddd")</span>
@@ -45,7 +45,7 @@ else
                         {
                             <div class="rooster-lesson" style="border-left-color:@WorkoutColor(lesson.WorkoutId)">
                                 <div class="rooster-lesson-time">
-                                    @lesson.StartAt.ToString("HH:mm")–@lesson.StartAt.AddMinutes(lesson.DurationMinutes).ToString("HH:mm")
+                                    @lesson.StartAt.ToLocalTime().ToString("HH:mm")–@lesson.StartAt.ToLocalTime().AddMinutes(lesson.DurationMinutes).ToString("HH:mm")
                                 </div>
                                 <div class="rooster-lesson-name">@WorkoutName(lesson.WorkoutId)</div>
                                 <div class="rooster-lesson-meta">@(lesson.Location?.Name ?? "-")</div>

@@ -190,6 +190,9 @@ namespace SportVitaal.Infrastructure.Data
             // and run the schedule through to the end of 2026.
             var firstDay = DateTime.UtcNow.Date.AddMonths(-1);
             var lastDay = new DateTime(2026, 12, 31);
+            // Lessons are stored in UTC. The template times are the club's local wall-clock
+            // times, so convert them through the club zone (DST-aware) rather than tagging UTC.
+            var clubZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Amsterdam");
             var rng = new Random(20260614);
             var lessons = new List<Lesson>();
             var instructorIndex = 0;
@@ -201,8 +204,9 @@ namespace SportVitaal.Infrastructure.Data
                     if (!workouts.TryGetValue(slot.Workout, out var workout)) continue;
                     if (!locations.TryGetValue(slot.Location, out var location)) continue;
 
-                    var startAt = DateTime.SpecifyKind(
-                        day.AddHours(slot.Hour).AddMinutes(slot.Minute), DateTimeKind.Utc);
+                    var localStart = DateTime.SpecifyKind(
+                        day.AddHours(slot.Hour).AddMinutes(slot.Minute), DateTimeKind.Unspecified);
+                    var startAt = TimeZoneInfo.ConvertTimeToUtc(localStart, clubZone);
 
                     Guid? instructorId = instructors.Count == 0
                         ? null

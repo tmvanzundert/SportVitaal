@@ -146,18 +146,20 @@ namespace SportVitaal.BlazerWasm.Services
 
         // ---- Admin: lessons ----
 
+        // Lesson times are stored in UTC. The admin enters wall-clock time in their local zone,
+        // so convert to UTC before sending (and back to local when displaying).
         public Task<bool> CreateLessonAsync(Guid workoutId, Guid locationId, DateTime startAt, int durationMinutes, Guid? instructorId, CancellationToken ct = default)
             => SendAuthAsync(HttpMethod.Post, "api/lessons",
-                new { workoutId, locationId, startAt, durationMinutes, instructorId }, ct);
+                new { workoutId, locationId, startAt = startAt.ToUniversalTime(), durationMinutes, instructorId }, ct);
 
         public Task<bool> CreateRecurringLessonAsync(Guid workoutId, Guid locationId, DateTime startAt, int durationMinutes,
             Guid? instructorId, RecurrenceFrequency frequency, int interval, DateTime? until, int? count, CancellationToken ct = default)
             => SendAuthAsync(HttpMethod.Post, "api/lessons/recurring",
-                new { workoutId, locationId, startAt, durationMinutes, instructorId, frequency = (int)frequency, interval, until, count }, ct);
+                new { workoutId, locationId, startAt = startAt.ToUniversalTime(), durationMinutes, instructorId, frequency = (int)frequency, interval, until = until?.ToUniversalTime(), count }, ct);
 
         public Task<bool> UpdateLessonAsync(Guid id, Guid locationId, DateTime startAt, int durationMinutes, Guid? instructorId, CancellationToken ct = default)
             => SendAuthAsync(HttpMethod.Put, $"api/lessons/{id}",
-                new { locationId, startAt, durationMinutes, instructorId }, ct);
+                new { locationId, startAt = startAt.ToUniversalTime(), durationMinutes, instructorId }, ct);
 
         public Task<bool> DeleteLessonAsync(Guid id, CancellationToken ct = default)
             => SendAuthAsync(HttpMethod.Delete, $"api/lessons/{id}", null, ct);

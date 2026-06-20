@@ -123,7 +123,7 @@ else
             @foreach (var lesson in _lessons.OrderBy(l => l.StartAt))
             {
                 <tr>
-                    <td>@lesson.StartAt.ToString("ddd d MMM HH:mm")</td>
+                    <td>@lesson.StartAt.ToLocalTime().ToString("ddd d MMM HH:mm")</td>
                     <td>@WorkoutName(lesson.WorkoutId)</td>
                     <td>@(lesson.Location?.Name ?? "-")</td>
                     <td>@InstructorName(lesson.InstructorId)</td>
@@ -197,7 +197,7 @@ else
         _workoutId = l.WorkoutId.ToString();
         _locationId = l.Location?.Id.ToString() ?? string.Empty;
         _instructorId = l.InstructorId?.ToString() ?? string.Empty;
-        _startAt = l.StartAt;
+        _startAt = l.StartAt.ToLocalTime();
         _duration = l.DurationMinutes;
         _recurring = false;
     }
