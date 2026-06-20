@@ -46,9 +46,18 @@
                     }
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
+                <label class="form-label">Startdatum</label>
+                <input class="form-control" type="date" @bind="StartDateValue"/>
+            </div>
+            <div class="col-md-2">
                 <label class="form-label">Starttijd</label>
-                <input class="form-control" type="datetime-local" @bind="_startAt"/>
+                <select class="form-select" @bind="StartTimeValue">
+                    @foreach (var t in TimeOptions)
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label">Duur (min)</label>
@@ -155,6 +164,24 @@ else
     private string _instructorId = string.Empty;
     private DateTime _startAt = DateTime.Today.AddHours(9);
     private int _duration = 60;
+
+    // The native datetime-local picker renders AM/PM based on the browser's locale,
+    // which we can't control. Split it into a date input and a 24-hour time dropdown
+    // so the time is always shown in Dutch (24-hour) notation.
+    private static readonly string[] TimeOptions =
+        Enumerable.Range(0, 24 * 4).Select(i => $"{i / 4:00}:{i % 4 * 15:00}").ToArray();
+
+    private DateOnly StartDateValue
+    {
+        get => DateOnly.FromDateTime(_startAt);
+        set => _startAt = value.ToDateTime(TimeOnly.FromDateTime(_startAt));
+    }
+
+    private string StartTimeValue
+    {
+        get => _startAt.ToString("HH:mm");
+        set { if (TimeSpan.TryParse(value, out var t)) _startAt = _startAt.Date + t; }
+    }
 
     private bool _recurring;
     private RecurrenceFrequency _frequency = RecurrenceFrequency.Weekly;
