@@ -34,8 +34,8 @@
 }
 
 .rooster-day.is-today {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 1px #0d6efd;
+    border-color: #f26522;
+    box-shadow: 0 0 0 1px #f26522;
 }
 
 .rooster-day-head {
@@ -49,7 +49,7 @@
 }
 
 .rooster-day.is-today .rooster-day-head {
-    background: #e7f1ff;
+    background: #fdeae0;
 }
 
 .rooster-day-name {
@@ -77,7 +77,7 @@
 }
 
 .rooster-lesson {
-    border-left: 4px solid #0d6efd;
+    border-left: 4px solid #f26522;
     background: #f8f9fa;
     border-radius: 0.3rem;
     padding: 0.4rem 0.5rem;

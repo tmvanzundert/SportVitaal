@@ -20,7 +20,7 @@
     }
 
         .loading-progress circle:last-child {
-            stroke: #1b6ec2;
+            stroke: #f26522;
             stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
             transition: stroke-dasharray 0.05s ease-in-out;
         }
@@ -35,3 +35,73 @@
     .loading-progress-text:after {
         content: var(--blazor-load-percentage-text, "Loading");
     }
+
+/* ===== SportVitaal brand theme (orange #f26522) =====
+   Overrides Bootstrap and the shared stylesheet's blue defaults so the WASM
+   portal matches the MAUI app's orange brand. Loaded after both, so plain
+   selectors win on the cascade. Scoped to this app via index.html. */
+:root {
+    --sv-brand: #f26522;
+    --sv-brand-dark: #d9551c;
+    --sv-brand-darker: #c64a14; /* darker shade for text on white (readable contrast) */
+    --sv-brand-tint: #fdeae0;
+}
+
+a, .btn-link {
+    color: var(--sv-brand-darker);
+}
+
+a:hover, .btn-link:hover {
+    color: var(--sv-brand-dark);
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: var(--sv-brand);
+    border-color: var(--sv-brand);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    color: #fff;
+    background-color: var(--sv-brand-dark);
+    border-color: var(--sv-brand-dark);
+}
+
+.btn-outline-primary {
+    color: var(--sv-brand-darker);
+    border-color: var(--sv-brand);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    color: #fff;
+    background-color: var(--sv-brand);
+    border-color: var(--sv-brand);
+}
+
+/* Focus rings (shared stylesheet sets these blue) */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    border-color: var(--sv-brand);
+    box-shadow: 0 0 0 0.25rem rgba(242, 101, 34, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: var(--sv-brand);
+    border-color: var(--sv-brand);
+}
+
+/* Admin sidebar links (AdminLayout uses .nav-link) */
+.nav-link {
+    color: var(--sv-brand-darker);
+}
+
+.nav-link.active {
+    color: var(--sv-brand);
+    font-weight: 600;
+}

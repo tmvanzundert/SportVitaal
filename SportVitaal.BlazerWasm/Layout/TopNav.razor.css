@@ -2,7 +2,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background-image: linear-gradient(90deg, #052767 0%, #3a0647 100%);
+    background-image: linear-gradient(90deg, #f26522 0%, #d9551c 100%);
     color: #fff;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
 }
@@ -31,8 +31,13 @@
 }
 
 .sv-brand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 2rem;
     height: 2rem;
+    font-size: 1.6rem;
+    line-height: 1;
 }
 
 .sv-brand-title {
@@ -73,13 +78,13 @@
 }
 
 .sv-nav ::deep .sv-nav-link:hover {
-    color: #052767;
+    color: #c64a14;
     background-color: #fff;
     border-color: #fff;
 }
 
 .sv-nav ::deep .sv-nav-link.active {
-    color: #052767;
+    color: #c64a14;
     background-color: #fff;
     border-color: #fff;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
@@ -118,7 +123,7 @@
 
 .sv-account-btn:hover {
     background-color: #fff;
-    color: #052767;
+    color: #c64a14;
 }
 
 /* Mobile toggler, hidden on desktop */
@@ -170,7 +175,7 @@
         align-items: stretch;
         gap: 0;
         padding: 0.5rem 1.5rem 1rem;
-        background-image: linear-gradient(90deg, #052767 0%, #3a0647 100%);
+        background-image: linear-gradient(90deg, #f26522 0%, #d9551c 100%);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
     }
 
