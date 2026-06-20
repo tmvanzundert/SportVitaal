@@ -17,6 +17,9 @@ public static class MauiProgram
         // Add device-specific services used by the SportVitaal.Shared project
         builder.Services.AddSingleton<IFormFactor, FormFactor>();
 
+        // RFID/NFC pass reader for door check-in (phone acts as the reader).
+        builder.Services.AddSingleton<IRfidReader, NfcRfidReader>();
+
         // Member portal: WebApi client holding the JWT and the signed-in member.
         builder.Services.AddSingleton<ApiClient>();
 

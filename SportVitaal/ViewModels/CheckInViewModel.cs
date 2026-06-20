@@ -1,28 +1,38 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SportVitaal.Services;
+using SportVitaal.Shared.Services;
 
 namespace SportVitaal.ViewModels;
 
 /// <summary>
 /// Backs the "Inchecken" page: registering attendance for the member's current lesson via GPS
 /// (a real device location read, verified server-side against the club location) or RFID
-/// (a simulated pass scan at the door).
+/// (an NFC pass scan at the door, falling back to a simulated scan on devices without NFC).
 /// </summary>
 public partial class CheckInViewModel : ObservableObject
 {
     private readonly ApiClient _api;
+    private readonly IRfidReader _rfid;
     private ApiClient.CheckInLesson? _lesson;
 
-    public CheckInViewModel(ApiClient api) => _api = api;
+    public CheckInViewModel(ApiClient api, IRfidReader rfid)
+    {
+        _api = api;
+        _rfid = rfid;
+    }
 
     [ObservableProperty] private bool _loaded;
     [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _useGps = true;
+    [ObservableProperty] private bool _useGps;
     [ObservableProperty] private bool _checkedIn;
     [ObservableProperty] private string? _gpsStatus;
+    [ObservableProperty] private string? _rfidStatus;
     [ObservableProperty] private string? _message;
     [ObservableProperty] private bool _messageIsError;
+
+    /// <summary>True when the device can read an NFC pass; otherwise the page offers a simulated scan.</summary>
+    public bool RfidSupported => _rfid.IsSupported;
 
     public bool HasLesson => _lesson is not null;
 
@@ -120,16 +130,32 @@ public partial class CheckInViewModel : ObservableObject
         }
     }
 
-    /// <summary>Simulates an RFID pass scan at the door and checks in.</summary>
+    /// <summary>
+    /// Reads the member's NFC pass and checks in with its UID. On devices without an NFC reader this
+    /// falls back to a simulated scan (no tag UID), preserving the previous demo behaviour.
+    /// </summary>
     [RelayCommand]
-    private async Task SimulateRfid()
+    private async Task ScanRfid()
     {
         if (_lesson is null || IsBusy) return;
         IsBusy = true;
         Message = null;
         try
         {
-            await SubmitAsync(_api.CheckInRfidAsync(_lesson.LessonId));
+            string? tagUid = null;
+            if (_rfid.IsSupported)
+            {
+                RfidStatus = "Houd je pas tegen de telefoon…";
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                tagUid = await _rfid.ReadTagAsync(cts.Token);
+                if (tagUid is null)
+                {
+                    SetMessage("Geen pas gelezen. Houd je pas tegen de telefoon en probeer het opnieuw.", true);
+                    return;
+                }
+            }
+
+            await SubmitAsync(_api.CheckInRfidAsync(_lesson.LessonId, tagUid));
         }
         catch
         {
@@ -137,6 +163,7 @@ public partial class CheckInViewModel : ObservableObject
         }
         finally
         {
+            RfidStatus = null;
             IsBusy = false;
             OnPropertyChanged(string.Empty);
         }

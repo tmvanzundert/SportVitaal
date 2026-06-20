@@ -235,9 +235,12 @@ public class ApiClient
     public Task<string?> CheckInGpsAsync(Guid lessonId, double latitude, double longitude, CancellationToken ct = default)
         => PostCheckInAsync(new { lessonId, method = "gps", latitude, longitude }, ct);
 
-    /// <summary>Checks in via RFID (simulated pass scan at the door).</summary>
-    public Task<string?> CheckInRfidAsync(Guid lessonId, CancellationToken ct = default)
-        => PostCheckInAsync(new { lessonId, method = "rfid" }, ct);
+    /// <summary>
+    /// Checks in via RFID. <paramref name="tagUid"/> is the scanned NFC pass UID, or null for a
+    /// simulated scan when the device has no NFC reader.
+    /// </summary>
+    public Task<string?> CheckInRfidAsync(Guid lessonId, string? tagUid = null, CancellationToken ct = default)
+        => PostCheckInAsync(new { lessonId, method = "rfid", tagUid }, ct);
 
     private async Task<string?> PostCheckInAsync(object body, CancellationToken ct)
     {

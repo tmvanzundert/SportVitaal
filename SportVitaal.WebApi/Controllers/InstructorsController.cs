@@ -40,7 +40,23 @@ namespace SportVitaal.WebApi.Controllers
         public async Task<IActionResult> GetAll()
         {
             var items = await _repo.GetAllAsync();
-            return Ok(items);
+
+            // The e-mail address lives on the linked login account, not the scheduling identity,
+            // so join the instructor accounts in to expose it alongside each instructor.
+            var accounts = await _users.GetByRoleAsync(Role.Instructor);
+            var emailByInstructorId = accounts
+                .Where(a => a.InstructorId.HasValue)
+                .ToDictionary(a => a.InstructorId!.Value, a => a.Email);
+
+            var result = items.Select(i => new InstructorListItemDto
+            {
+                Id = i.Id,
+                Name = i.Name,
+                PhotoUrl = i.PhotoUrl,
+                Email = emailByInstructorId.GetValueOrDefault(i.Id),
+            });
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -178,6 +194,14 @@ namespace SportVitaal.WebApi.Controllers
                 chars[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
             return new string(chars);
         }
+    }
+
+    public class InstructorListItemDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = null!;
+        public string? PhotoUrl { get; set; }
+        public string? Email { get; set; }
     }
 
     public class InstructorDto

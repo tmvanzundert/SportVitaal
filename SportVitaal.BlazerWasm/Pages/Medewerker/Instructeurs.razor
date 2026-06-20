@@ -43,7 +43,7 @@
 else
 {
     <table class="table align-middle">
-        <thead><tr><th>Foto</th><th>Naam</th><th></th></tr></thead>
+        <thead><tr><th>Foto</th><th>Naam</th><th>E-mailadres</th><th></th></tr></thead>
         <tbody>
             @foreach (var i in _instructors)
             {
@@ -59,6 +59,7 @@ else
                         }
                     </td>
                     <td>@i.Name</td>
+                    <td>@(string.IsNullOrWhiteSpace(i.Email) ? "—" : i.Email)</td>
                     <td class="text-end">
                         <label class="btn btn-sm btn-outline-secondary mb-0">
                             Foto

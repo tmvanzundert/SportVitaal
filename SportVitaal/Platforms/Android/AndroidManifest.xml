@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <!-- RFID/NFC check-in: the phone reads the member's pass at the door. -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
     <!-- Android 11+ package visibility: declare the camera-capture intent so the system camera app
          is visible to MediaPicker.CapturePhotoAsync. -->
     <queries>

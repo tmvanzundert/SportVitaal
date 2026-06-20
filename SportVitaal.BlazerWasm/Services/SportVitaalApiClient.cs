@@ -228,7 +228,7 @@ namespace SportVitaal.BlazerWasm.Services
 
     public record WorkoutDto(Guid Id, string Name, string? Description, int DefaultDurationMinutes);
 
-    public record InstructorDto(Guid Id, string Name, string? PhotoUrl);
+    public record InstructorDto(Guid Id, string Name, string? PhotoUrl, string? Email = null);
 
     public record LocationDto(Guid Id, string Name, int Capacity, bool AllowsSeatSelection);
 

@@ -42,8 +42,8 @@
         else
         {
             <div class="tabs">
-                <button class="tab @(Vm.UseGps ? "active" : "")" @onclick="OnSelectGps">📍 GPS</button>
                 <button class="tab @(!Vm.UseGps ? "active" : "")" @onclick="() => Vm.SelectRfidCommand.Execute(null)">💳 RFID</button>
+                <button class="tab @(Vm.UseGps ? "active" : "")" @onclick="OnSelectGps">📍 GPS</button>
             </div>
 
             @if (Vm.Message is not null)
@@ -72,8 +72,18 @@
                 <section class="stage card">
                     <div class="pulse"><span class="big">💳</span></div>
                     <h3 class="stage-title">Houd je pas voor de scanner</h3>
-                    <p class="muted center">Gebruik de RFID-scanner bij de ingang van de zaal.</p>
-                    <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.SimulateRfidCommand.ExecuteAsync(null)">Simuleer scan</button>
+                    <p class="muted center">
+                        @(Vm.RfidSupported
+                            ? "Houd je NFC-pas tegen de achterkant van je telefoon."
+                            : "Dit apparaat heeft geen NFC. Gebruik de RFID-scanner bij de ingang van de zaal.")
+                    </p>
+                    @if (Vm.RfidStatus is not null)
+                    {
+                        <p class="muted center">@Vm.RfidStatus</p>
+                    }
+                    <button class="primary" disabled="@Vm.IsBusy" @onclick="() => Vm.ScanRfidCommand.ExecuteAsync(null)">
+                        @(Vm.RfidSupported ? "Scan pas" : "Simuleer scan")
+                    </button>
                 </section>
             }
         }
