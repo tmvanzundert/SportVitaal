@@ -48,6 +48,21 @@ else
         </div>
 
         <div class="mb-3">
+            <label class="form-label" for="firstname">Voornaam</label>
+            <InputText id="firstname" class="form-control" @bind-Value="_firstName"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="lastname">Achternaam</label>
+            <InputText id="lastname" class="form-control" @bind-Value="_lastName"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="username">Gebruikersnaam <span class="text-muted">(optioneel)</span></label>
+            <InputText id="username" class="form-control" @bind-Value="_userName"/>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label" for="email">E-mailadres</label>
             <InputText id="email" class="form-control" @bind-Value="_email"/>
         </div>
@@ -81,6 +96,9 @@ else
 
     private MembershipType _selectedPlan = MembershipType.UnlimitedMonthly;
     private DateTime _startDate = DateTime.Today;
+    private string _firstName = string.Empty;
+    private string _lastName = string.Empty;
+    private string _userName = string.Empty;
     private string _email = string.Empty;
     private string _password = string.Empty;
 
@@ -108,6 +126,11 @@ else
     {
         _error = null;
 
+        if (string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName))
+        {
+            _error = "Vul je voor- en achternaam in.";
+            return;
+        }
         if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
         {
             _error = "Vul een e-mailadres en wachtwoord in.";
@@ -122,7 +145,8 @@ else
         _submitting = true;
         try
         {
-            var (regOk, regErr) = await Api.RegisterAsync(_email, _password);
+            var fullName = $"{_firstName.Trim()} {_lastName.Trim()}";
+            var (regOk, regErr) = await Api.RegisterAsync(_email, _password, fullName, _userName);
             if (!regOk)
             {
                 _error = regErr is not null && regErr.Contains("already exists", StringComparison.OrdinalIgnoreCase)

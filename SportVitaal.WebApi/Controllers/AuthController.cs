@@ -37,6 +37,9 @@ namespace SportVitaal.WebApi.Controllers
                 user.SetPasswordHash(hash);
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.UserName) || !string.IsNullOrWhiteSpace(dto.FullName))
+                user.UpdateProfile(dto.UserName, dto.FullName, null);
+
             await _userRepository.AddAsync(user);
             await _uow.SaveChangesAsync();
 
@@ -87,6 +90,8 @@ namespace SportVitaal.WebApi.Controllers
         public string Email { get; set; } = null!;
         public Role? Role { get; set; }
         public string? Password { get; set; }
+        public string? FullName { get; set; }
+        public string? UserName { get; set; }
     }
 
     public class LoginDto

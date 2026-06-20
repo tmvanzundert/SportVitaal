@@ -46,9 +46,9 @@ namespace SportVitaal.BlazerWasm.Services
 
         // ---- Signup flow ----
 
-        public async Task<(bool ok, string? error)> RegisterAsync(string email, string password, CancellationToken ct = default)
+        public async Task<(bool ok, string? error)> RegisterAsync(string email, string password, string? fullName = null, string? userName = null, CancellationToken ct = default)
         {
-            var resp = await _http.PostAsJsonAsync("api/auth/register", new { email, password }, JsonOptions, ct);
+            var resp = await _http.PostAsJsonAsync("api/auth/register", new { email, password, fullName, userName }, JsonOptions, ct);
             if (resp.IsSuccessStatusCode) return (true, null);
             return (false, await resp.Content.ReadAsStringAsync(ct));
         }

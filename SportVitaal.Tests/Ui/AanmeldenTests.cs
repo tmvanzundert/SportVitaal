@@ -36,6 +36,8 @@ public class AanmeldenTests
 
     private static void FillCredentials(IRenderedFragment cut)
     {
+        cut.Find("#firstname").Change("Nieuw");
+        cut.Find("#lastname").Change("Lid");
         cut.Find("#email").Change("nieuw@lid.nl");
         cut.Find("#password").Change("Wachtwoord1!");
     }
@@ -61,10 +63,26 @@ public class AanmeldenTests
         using var ctx = CreateContext(new StubHttpMessageHandler());
 
         var cut = ctx.RenderComponent<Aanmelden>();
+        cut.Find("#firstname").Change("Nieuw");
+        cut.Find("#lastname").Change("Lid");
         cut.Find("form").Submit();
 
         var alert = cut.Find(".alert-danger");
         Assert.That(alert.TextContent, Does.Contain("Vul een e-mailadres en wachtwoord in"));
+    }
+
+    [Test]
+    public void Submitting_without_a_name_shows_a_validation_error()
+    {
+        using var ctx = CreateContext(new StubHttpMessageHandler());
+
+        var cut = ctx.RenderComponent<Aanmelden>();
+        cut.Find("#email").Change("nieuw@lid.nl");
+        cut.Find("#password").Change("Wachtwoord1!");
+        cut.Find("form").Submit();
+
+        var alert = cut.Find(".alert-danger");
+        Assert.That(alert.TextContent, Does.Contain("Vul je voor- en achternaam in"));
     }
 
     [Test]
