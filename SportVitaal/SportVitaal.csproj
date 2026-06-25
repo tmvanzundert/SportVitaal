@@ -20,13 +20,11 @@
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
         <Nullable>enable</Nullable>
 
-        <!-- Enable XAML source generation for faster build times and improved performance.
-             This generates C# code from XAML at compile time instead of runtime inflation.
-             To disable, remove this line.
-             For individual files, you can override by setting Inflator metadata:
-               <MauiXaml Update="MyPage.xaml" Inflator="Default" /> (reverts to defaults: Runtime for Debug, XamlC for Release)
-               <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
-        <MauiXamlInflator>SourceGen</MauiXamlInflator>
+        <!-- XAML SourceGen is intentionally NOT enabled. MainPage.xaml references the Blazor
+             root component SportVitaal.Components.Main, which is itself produced by the Razor
+             source generator. The XAML source generator runs in the same compilation and cannot
+             see another generator's output, so it fails to resolve Main (MAUIX2000). The default
+             inflator (Runtime in Debug, XamlC in Release) resolves against the built assembly. -->
 
         <!-- Display name -->
         <ApplicationTitle>SportVitaal</ApplicationTitle>
@@ -67,6 +65,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
+        <PackageReference Include="Microsoft.Maui.Core" Version="10.0.1" />
         <PackageReference Include="Plugin.NFC" Version="0.1.26"/>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)"/>
